@@ -48,7 +48,7 @@ class Profile extends _$Profile {
           .updateProfile(notificationsEnabled: enabled);
     } catch (e) {
       state = previousState; // Revert on failure
-      throw e;
+      rethrow;
     }
   }
 }

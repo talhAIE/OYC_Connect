@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/prayer_time_model.dart';
+import '../datasources/masjidal_scraper_service.dart';
 
 class PrayerTimesRepository {
   final SupabaseClient _client;
@@ -42,5 +43,26 @@ class PrayerTimesRepository {
     }
     data['date'] = dateStr;
     await _client.from('prayer_times').upsert(data, onConflict: 'date');
+  }
+
+  Future<void> syncMasjidalData() async {
+    try {
+      final scraper = MasjidalScraperService();
+      final prayerTimes = await scraper.fetchMonthlyPrayerTimes();
+
+      if (prayerTimes.isEmpty) return;
+
+      final List<Map<String, dynamic>> data = prayerTimes.map((pt) {
+        final json = pt.toJson();
+        if (pt.id == 0) json.remove('id');
+        json['date'] = pt.date.toIso8601String().split('T')[0];
+        return json;
+      }).toList();
+
+      await _client.from('prayer_times').upsert(data, onConflict: 'date');
+    } catch (e) {
+      print('Sync Error: $e');
+      rethrow;
+    }
   }
 }

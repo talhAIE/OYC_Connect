@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../features/prayer_times/data/models/prayer_time_model.dart';
@@ -146,6 +145,53 @@ class _ManagePrayerTimesPageState extends ConsumerState<ManagePrayerTimesPage> {
           context,
         ).showSnackBar(SnackBar(content: Text('Error saving: $e')));
       }
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _syncMasjidal() async {
+    // Show confirmation dialog
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Sync with Masjidal?"),
+        content: const Text(
+          "This will overwrite prayer times for this month with data from Masjidal.com. Are you sure?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("CANCEL"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("SYNC", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final repo = ref.read(prayerTimesRepositoryProvider);
+      await repo.syncMasjidalData();
+
+      // Refresh current view
+      await _fetchData();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Synced successfully with Masjidal')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Sync failed: $e')));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -255,6 +301,21 @@ class _ManagePrayerTimesPageState extends ConsumerState<ManagePrayerTimesPage> {
                     ),
                   ),
                   const SizedBox(height: 30),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _syncMasjidal,
+                      icon: const Icon(Icons.sync),
+                      label: const Text("SYNC FROM MASJIDAL"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF1B5E20),
+                        side: const BorderSide(color: Color(0xFF1B5E20)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(

@@ -244,7 +244,7 @@ class ProfilePage extends ConsumerWidget {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         value: value,
         onChanged: onChanged,
-        activeColor: const Color(0xFF1B5E20),
+        activeThumbColor: const Color(0xFF1B5E20),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );

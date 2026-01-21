@@ -1,7 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/profile_model.dart';
-import '../../../../core/constants/supabase_constants.dart';
 
 part 'profile_repository.g.dart';
 
