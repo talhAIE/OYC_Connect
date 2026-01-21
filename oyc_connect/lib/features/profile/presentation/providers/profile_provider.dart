@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../data/models/profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 part 'profile_provider.g.dart';
 
@@ -8,6 +9,8 @@ part 'profile_provider.g.dart';
 class Profile extends _$Profile {
   @override
   FutureOr<ProfileModel?> build() async {
+    // Watch auth state changes so this provider rebuilds when user logs in/out
+    final _ = ref.watch(authStateChangesProvider);
     return _fetchProfile();
   }
 

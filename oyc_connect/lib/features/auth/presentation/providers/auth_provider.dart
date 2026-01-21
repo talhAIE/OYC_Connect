@@ -13,6 +13,11 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(supabase);
 });
 
+// Stream of Auth State Changes
+final authStateChangesProvider = StreamProvider<AuthState>((ref) {
+  return ref.watch(authRepositoryProvider).authStateChanges;
+});
+
 // Auth Controller State
 final authControllerProvider =
     NotifierProvider<AuthController, AsyncValue<void>>(AuthController.new);
