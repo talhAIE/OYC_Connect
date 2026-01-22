@@ -2,12 +2,22 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../data/models/profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
 
+import '../../../auth/presentation/providers/auth_provider.dart';
+
 part 'profile_provider.g.dart';
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: false)
 class Profile extends _$Profile {
   @override
   FutureOr<ProfileModel?> build() async {
+    // Watch Auth State to rebuild profile on login/logout
+    final authState = ref.watch(authStateProvider);
+
+    // If not authenticated or loading, return null/loading
+    if (authState.asData?.value.session == null) {
+      return null;
+    }
+
     return _fetchProfile();
   }
 
