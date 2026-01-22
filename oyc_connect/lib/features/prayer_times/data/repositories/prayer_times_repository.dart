@@ -25,6 +25,33 @@ class PrayerTimesRepository {
     }
   }
 
+  /// Fetches prayer times for a specific month
+  Future<List<PrayerTime>> getMonthlyPrayerTimes(int year, int month) async {
+    try {
+      final startDate = DateTime(year, month, 1);
+      final endDate = DateTime(year, month + 1, 0); // Last day of month
+
+      final startDateStr = startDate.toIso8601String().split('T')[0];
+      final endDateStr = endDate.toIso8601String().split('T')[0];
+
+      print('Fetching monthly prayer times from $startDateStr to $endDateStr');
+
+      final response = await _client
+          .from('prayer_times')
+          .select()
+          .gte('date', startDateStr)
+          .lte('date', endDateStr)
+          .order('date', ascending: true);
+
+      return (response as List)
+          .map((json) => PrayerTime.fromJson(json))
+          .toList();
+    } catch (e) {
+      print('Error fetching monthly prayer times: $e');
+      return [];
+    }
+  }
+
   /// Subscribes to realtime updates for the prayer_times table
   Stream<List<PrayerTime>> subscribeToPrayerTimes({String? dateStr}) {
     if (dateStr != null) {

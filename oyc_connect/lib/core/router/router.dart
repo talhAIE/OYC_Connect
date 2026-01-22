@@ -18,6 +18,8 @@ import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/admin/presentation/pages/manage_prayer_times_page.dart';
 import '../../features/admin/presentation/pages/manage_events_page.dart';
 import '../../features/admin/presentation/pages/manage_announcements_page.dart';
+
+import '../../features/prayer_times/presentation/pages/prayer_calendar_page.dart';
 import '../presentation/main_scaffold.dart';
 
 // We need a provider for the router to listen to auth changes
@@ -66,6 +68,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/home',
                 builder: (context, state) => const HomePage(),
+                routes: [
+                  GoRoute(
+                    path: 'prayer-calendar',
+                    builder: (context, state) => const PrayerCalendarPage(),
+                  ),
+                ],
               ),
             ],
           ),

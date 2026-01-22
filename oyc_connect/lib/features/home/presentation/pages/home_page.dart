@@ -366,7 +366,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () => context.go('/home/prayer-calendar'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white.withOpacity(0.2),
                 foregroundColor: Colors.white,
