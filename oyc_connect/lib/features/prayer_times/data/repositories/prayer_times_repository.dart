@@ -26,7 +26,16 @@ class PrayerTimesRepository {
   }
 
   /// Subscribes to realtime updates for the prayer_times table
-  Stream<List<PrayerTime>> subscribeToPrayerTimes() {
+  Stream<List<PrayerTime>> subscribeToPrayerTimes({String? dateStr}) {
+    if (dateStr != null) {
+      return _client
+          .from('prayer_times')
+          .stream(primaryKey: ['id'])
+          .eq('date', dateStr)
+          .map(
+            (data) => data.map((json) => PrayerTime.fromJson(json)).toList(),
+          );
+    }
     return _client
         .from('prayer_times')
         .stream(primaryKey: ['id'])

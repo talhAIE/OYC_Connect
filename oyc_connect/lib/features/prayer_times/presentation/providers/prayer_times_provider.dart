@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/prayer_times_repository.dart';
 import '../../data/models/prayer_time_model.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 part 'prayer_times_provider.g.dart';
 
@@ -20,12 +21,16 @@ Stream<PrayerTime?> todayPrayerTime(TodayPrayerTimeRef ref) {
   // This is a bit tricky with standard stream/subscribe as Supabase stream usually returns a list.
   // We'll trust the repository helper or just stream the list and filter.
 
-  return repository.subscribeToPrayerTimes().map((list) {
-    final todayStr = DateTime.now().toIso8601String().split('T')[0];
+  // Determine today in Melbourne
+  final melbourne = tz.getLocation('Australia/Melbourne');
+  final nowMelbourne = tz.TZDateTime.now(melbourne);
+  final todayStr = nowMelbourne.toIso8601String().split('T')[0];
+
+  return repository.subscribeToPrayerTimes(dateStr: todayStr).map((list) {
     try {
-      return list.firstWhere(
-        (pt) => pt.date.toIso8601String().split('T')[0] == todayStr,
-      );
+      if (list.isEmpty) return null;
+      // Since we filtered by date, the list should contain only today's record (or duplicates if any, but first is fine)
+      return list.first;
     } catch (_) {
       return null;
     }

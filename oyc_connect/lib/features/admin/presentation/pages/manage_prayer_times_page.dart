@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'package:html/parser.dart' as parser;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../features/prayer_times/data/models/prayer_time_model.dart';
 import '../../../../features/prayer_times/presentation/providers/prayer_times_provider.dart';
@@ -135,6 +137,9 @@ class _ManagePrayerTimesPageState extends ConsumerState<ManagePrayerTimesPage> {
 
       await repo.upsertPrayerTimes(newTime);
 
+      // Force refresh of the home page provider
+      ref.invalidate(todayPrayerTimeProvider);
+
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -164,6 +169,158 @@ class _ManagePrayerTimesPageState extends ConsumerState<ManagePrayerTimesPage> {
       });
       _fetchData();
     }
+  }
+
+  Future<void> _syncFromMasjidal() async {
+    setState(() => _isLoading = true);
+    try {
+      final url = Uri.parse(
+        'https://timing.athanplus.com/masjid/widgets/monthly?theme=3&masjid_id=keLQajLM',
+      );
+      final response = await http.get(
+        url,
+        headers: {
+          'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to load page: ${response.statusCode}');
+      }
+
+      final document = parser.parse(response.body);
+      final rows = document.querySelectorAll('#time-table3 tr');
+
+      final repo = ref.read(prayerTimesRepositoryProvider);
+
+      // We need to determine the month and year from the page if possible,
+      // but for simplicity, let's assume the widget returns the current month by default
+      // or we can parse the header.
+      // The header has "JANUARY ( RAJAB & SHABAN )"
+
+      final headerText =
+          document.querySelector('.pagesubheading3')?.text.trim() ?? '';
+      // Extract Month name, e.g., "JANUARY"
+      final monthName = headerText.split('(').first.trim();
+
+      // Map full month name to month number
+      int monthNum = 1;
+      try {
+        monthNum = DateFormat('MMMM').parse(monthName).month;
+      } catch (e) {
+        // Fallback or error if month parse fails.
+        // For now, let's assume standard names.
+        // If parsing fails, we might default to current month or throw.
+        monthNum = DateTime.now().month; // Fallback
+      }
+
+      // Year: The widget might not explicitly show the year in a simplified way,
+      // but usually it defaults to current/requested.
+      // Let's assume current year for safety unless we find year in the page.
+      final currentYear = DateTime.now().year;
+
+      int count = 0;
+
+      for (var row in rows) {
+        final cells = row.querySelectorAll('.regCell');
+        // We expect: Date, Islamic Date, Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha
+        // Index: 0=Date, 1=Islamic, 2=Fajr, 3=Sunrise, 4=Dhuhr, 5=Asr, 6=Maghrib, 7=Isha
+        if (cells.length < 8) continue;
+
+        final dayText = cells[0].text
+            .trim()
+            .split(',')
+            .first
+            .trim(); // "1, THU" -> "1"
+        final day = int.tryParse(dayText);
+
+        if (day == null) continue;
+
+        final date = DateTime(currentYear, monthNum, day);
+
+        // Helper to parse "4:09 | 5:00" -> Adhan, Iqamah
+        // Also handling AM/PM rule.
+        // Fajr: AM
+        // Sunrise: AM
+        // Dhuhr: PM (Need to check if 11am, usually PM except early)
+        // Asr, Maghrib, Isha: PM
+
+        String parseAdhan(String text, {required bool isAm}) {
+          final time = text.split('|').first.trim();
+          return _formatTime(time, isAm: isAm);
+        }
+
+        String parseIqamah(String text, {required bool isAm}) {
+          final parts = text.split('|');
+          if (parts.length < 2) return '';
+          final time = parts.last.trim();
+          // Sometimes iqamah is empty or bolded
+          return _formatTime(time, isAm: isAm);
+        }
+
+        final fajrText = cells[2].text.trim();
+
+        final dhuhrText = cells[4].text.trim();
+        final asrText = cells[5].text.trim();
+        final maghribText = cells[6].text.trim();
+        final ishaText = cells[7].text.trim();
+
+        final prayerTime = PrayerTime(
+          id: 0,
+          date: date,
+          fajr: parseAdhan(fajrText, isAm: true),
+          fajrIqama: parseIqamah(fajrText, isAm: true),
+          dhuhr: parseAdhan(dhuhrText, isAm: false), // Mostly PM
+          dhuhrIqama: parseIqamah(dhuhrText, isAm: false),
+          asr: parseAdhan(asrText, isAm: false),
+          asrIqama: parseIqamah(asrText, isAm: false),
+          maghrib: parseAdhan(maghribText, isAm: false),
+          maghribIqama: parseIqamah(maghribText, isAm: false),
+          isha: parseAdhan(ishaText, isAm: false),
+          ishaIqama: parseIqamah(ishaText, isAm: false),
+          jumuah: "1:00 PM", // Default or fetch if available
+        );
+
+        await repo.upsertPrayerTimes(prayerTime);
+        count++;
+      }
+
+      // Force refresh of the home page provider
+      ref.invalidate(todayPrayerTimeProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Synced $count days successfully from Masjidal'),
+          ),
+        );
+        _fetchData(); // Refresh current view
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Sync Error: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _formatTime(String raw, {required bool isAm}) {
+    if (raw.isEmpty) return '';
+    // cleanup spaces, newlines, bold tags if any remaining (parser handles tags mostly)
+    String clean = raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (clean.isEmpty) return '';
+
+    // Check if aleady has AM/PM
+    if (clean.toUpperCase().contains('AM') ||
+        clean.toUpperCase().contains('PM')) {
+      return clean;
+    }
+
+    return '$clean ${isAm ? "AM" : "PM"}';
   }
 
   Future<void> _pickTime(TextEditingController controller) async {
@@ -217,6 +374,34 @@ class _ManagePrayerTimesPageState extends ConsumerState<ManagePrayerTimesPage> {
           IconButton(
             icon: const Icon(Icons.calendar_month),
             onPressed: _selectDate,
+          ),
+          IconButton(
+            icon: const Icon(Icons.sync),
+            tooltip: 'Sync from Masjidal',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Sync from Masjidal?'),
+                  content: const Text(
+                    'This will fetch the latest monthly data from Masjidal.com and overwrite existing database entries for this month. Continue?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('CANCEL'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _syncFromMasjidal();
+                      },
+                      child: const Text('SYNC'),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),
