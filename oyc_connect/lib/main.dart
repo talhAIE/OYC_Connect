@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'core/constants/supabase_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/router.dart';
@@ -14,6 +15,11 @@ Future<void> main() async {
     url: SupabaseConstants.url,
     anonKey: SupabaseConstants.anonKey,
   );
+
+  // Initialize OneSignal
+  OneSignal.initialize("1841c7be-1c1b-4ef4-96ec-17b15b252126");
+  // Request permission
+  OneSignal.Notifications.requestPermission(true);
 
   runApp(const ProviderScope(child: MyApp()));
 }
