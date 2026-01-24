@@ -12,29 +12,48 @@ PrayerTimesRepository prayerTimesRepository(PrayerTimesRepositoryRef ref) {
 }
 
 @riverpod
-Stream<PrayerTime?> todayPrayerTime(TodayPrayerTimeRef ref) {
-  // Fetch initial data or listen to realtime?
-  // For simplicity, let's just fetch for now, or stream if we want realtime updates on the day.
-  // Actually, let's stream the ONE row for today.
-
+Stream<PrayerTime?> todayPrayerTime(TodayPrayerTimeRef ref) async* {
   final repository = ref.watch(prayerTimesRepositoryProvider);
-  // This is a bit tricky with standard stream/subscribe as Supabase stream usually returns a list.
-  // We'll trust the repository helper or just stream the list and filter.
 
   // Determine today in Melbourne
   final melbourne = tz.getLocation('Australia/Melbourne');
   final nowMelbourne = tz.TZDateTime.now(melbourne);
   final todayStr = nowMelbourne.toIso8601String().split('T')[0];
 
-  return repository.subscribeToPrayerTimes(dateStr: todayStr).map((list) {
-    try {
-      if (list.isEmpty) return null;
-      // Since we filtered by date, the list should contain only today's record (or duplicates if any, but first is fine)
-      return list.first;
-    } catch (_) {
-      return null;
+  // 1. Attempt initial REST fetch for immediate display and fallback
+  PrayerTime? fallbackData;
+  try {
+    fallbackData = await repository.getPrayerTimes(nowMelbourne);
+    if (fallbackData != null) {
+      yield fallbackData;
     }
-  });
+  } catch (e) {
+    print('Initial fetch failed: $e');
+  }
+
+  // 2. Subscribe to Realtime updates with error handling
+  try {
+    final stream = repository
+        .subscribeToPrayerTimes(dateStr: todayStr)
+        .map((list) {
+          if (list.isNotEmpty) {
+            fallbackData = list.first; // Update fallback data
+            return list.first;
+          }
+          return null;
+        })
+        .handleError((error) {
+          // If Realtime fails (e.g. Token Expired), we log it but do NOT crash the UI.
+          // The previous yield (from REST or previous stream event) remains active.
+          print(
+            'Realtime subscription error (ignoring to prevent UI crash): $error',
+          );
+        });
+
+    yield* stream;
+  } catch (e) {
+    print('Stream setup failed: $e');
+  }
 }
 
 @riverpod
