@@ -57,6 +57,17 @@ class AdminDashboardPage extends ConsumerWidget {
                 context.push('/profile/admin/announcements');
               },
             ),
+            const SizedBox(height: 16),
+            _buildAdminTile(
+              context,
+              title: "Manage Jummah Settings",
+              subtitle: "Update Khutbah time and Friday details",
+              icon: Icons.mosque,
+              color: Colors.teal,
+              onTap: () {
+                context.push('/profile/admin/jummah-settings');
+              },
+            ),
           ],
         ),
       ),

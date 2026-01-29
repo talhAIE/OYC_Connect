@@ -7,6 +7,8 @@ import 'package:ntp/ntp.dart';
 import 'dart:async';
 import '../../../prayer_times/presentation/providers/prayer_times_provider.dart';
 import '../../../prayer_times/data/models/prayer_time_model.dart';
+import '../../../prayer_times/data/models/jummah_config.dart';
+import '../widgets/jummah_detail_dialog.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -14,6 +16,7 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final prayerTimeAsync = ref.watch(todayPrayerTimeProvider);
+    final jummahConfigAsync = ref.watch(jummahConfigProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA), // Light background
@@ -35,7 +38,10 @@ class HomePage extends ConsumerWidget {
                       ),
                     );
                   }
-                  return _PrayerContent(prayerTime: prayerTime);
+                  return _PrayerContent(
+                    prayerTime: prayerTime,
+                    jummahConfig: jummahConfigAsync.asData?.value,
+                  );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, stack) => Center(child: Text('Error: $err')),
@@ -98,7 +104,8 @@ class HomePage extends ConsumerWidget {
 
 class _PrayerContent extends StatelessWidget {
   final dynamic prayerTime;
-  const _PrayerContent({required this.prayerTime});
+  final JummahConfig? jummahConfig;
+  const _PrayerContent({required this.prayerTime, this.jummahConfig});
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +127,7 @@ class _PrayerContent extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         // We need next prayer info to highlight the list, but for now let's just highlight based on time
-        _PrayerList(prayerTime: prayerTime),
+        _PrayerList(prayerTime: prayerTime, jummahConfig: jummahConfig),
       ],
     );
   }
@@ -400,13 +407,15 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
 
 class _PrayerList extends StatelessWidget {
   final dynamic prayerTime;
-  const _PrayerList({required this.prayerTime});
+  final JummahConfig? jummahConfig;
+  const _PrayerList({required this.prayerTime, this.jummahConfig});
 
   @override
   Widget build(BuildContext context) {
     // We re-calculate current prayer here simply to highlight
     final melbourne = tz.getLocation('Australia/Melbourne');
     final now = tz.TZDateTime.now(melbourne);
+    final isFriday = now.weekday == DateTime.friday;
 
     // Robust Parser (duplicated for now for simplicity in stateless widget)
     tz.TZDateTime? parseTime(String? timeStr) {
@@ -469,12 +478,16 @@ class _PrayerList extends StatelessWidget {
           target == "Fajr",
         ),
         const SizedBox(height: 12),
-        _buildPrayerItem(
-          "Dhuhr",
-          prayerTime.dhuhr,
-          prayerTime.dhuhrIqama,
-          target == "Dhuhr",
-        ),
+        const SizedBox(height: 12),
+        if (isFriday && jummahConfig != null)
+          _buildJummahItem(context, jummahConfig!, target == "Dhuhr")
+        else
+          _buildPrayerItem(
+            "Dhuhr",
+            prayerTime.dhuhr,
+            prayerTime.dhuhrIqama,
+            target == "Dhuhr",
+          ),
         const SizedBox(height: 12),
         _buildPrayerItem(
           "Asr",
@@ -585,6 +598,93 @@ class _PrayerList extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildJummahItem(
+    BuildContext context,
+    JummahConfig config,
+    bool isActive,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => JummahDetailDialog(config: config),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white, // Light theme
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.teal.withOpacity(0.3), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.teal.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.teal.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.mosque, color: Colors.teal),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Jummah Prayer",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal[800],
+                    ),
+                  ),
+                  Text(
+                    "Tap for details", // Helper text
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  config.khutbahTime,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal[800],
+                  ),
+                ),
+                Text(
+                  "KHUTBAH",
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
