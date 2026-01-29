@@ -24,11 +24,11 @@ class MainScaffold extends StatelessWidget {
       bottomNavigationBar: Container(
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color.fromARGB(255, 12, 214, 19),
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -40,7 +40,7 @@ class MainScaffold extends StatelessWidget {
             elevation: 0,
             backgroundColor: Colors.white,
             selectedItemColor: const Color(0xFF1B5E20),
-            unselectedItemColor: Colors.grey[300],
+            unselectedItemColor: Colors.black.withAlpha(135),
             showUnselectedLabels: true,
             type: BottomNavigationBarType.fixed,
             currentIndex: navigationShell.currentIndex,

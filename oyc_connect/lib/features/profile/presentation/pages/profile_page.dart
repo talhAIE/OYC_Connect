@@ -28,7 +28,7 @@ class ProfilePage extends ConsumerWidget {
                   color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 14),
 
               // User Info Card
               profileAsync.when(
@@ -40,33 +40,33 @@ class ProfilePage extends ConsumerWidget {
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, _) => Text("Error: $err"),
               ),
-
+              const SizedBox(height: 10),
               // Admin Section
               if (profileAsync.value?.role == 'admin') ...[
-                const Text(
+                Text(
                   "ADMINISTRATION",
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey,
+                    color: Colors.black.withAlpha(195),
                     letterSpacing: 1.0,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 _buildSettingsTile(
                   icon: Icons.admin_panel_settings,
                   title: "Admin Console",
                   onTap: () => context.push('/profile/admin'),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 30),
               ],
 
-              const Text(
+              Text(
                 "SETTINGS",
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey,
+                  color: Colors.black.withAlpha(195),
                   letterSpacing: 1.0,
                 ),
               ),
@@ -99,24 +99,24 @@ class ProfilePage extends ConsumerWidget {
                 onTap: () => context.push('/profile/change-password'),
               ),
 
-              const SizedBox(height: 32),
-              const Text(
+              const SizedBox(height: 30),
+              Text(
                 "SUPPORT",
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey,
+                  color: Colors.black.withAlpha(195),
                   letterSpacing: 1.0,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _buildSettingsTile(
                 icon: Icons.help_outline,
                 title: "Help & Support",
                 onTap: () {}, // Dummy
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 30),
               _buildSignOutButton(ref, context),
             ],
           ),
@@ -133,7 +133,7 @@ class ProfilePage extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -167,7 +167,10 @@ class ProfilePage extends ConsumerWidget {
               ),
               Text(
                 email,
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black.withAlpha(195),
+                ),
               ),
             ],
           ),
@@ -187,7 +190,7 @@ class ProfilePage extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),

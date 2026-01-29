@@ -58,14 +58,14 @@ class HomePage extends ConsumerWidget {
               'MASJID AL-RAWDAH',
               style: TextStyle(
                 color: Colors.teal[700],
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.0,
               ),
             ),
             const SizedBox(height: 4),
             const Text(
-              'Assalamu Alaikum,',
+              'Assalamu Alaikum',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
@@ -79,17 +79,17 @@ class HomePage extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFFF5F7FA),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withAlpha(0),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: const Icon(Icons.notifications_outlined, color: Colors.grey),
+          child: const Icon(Icons.notifications_outlined, color: Colors.black),
         ),
       ],
     );
@@ -106,14 +106,14 @@ class _PrayerContent extends StatelessWidget {
       children: [
         _NextPrayerCard(prayerTime: prayerTime),
         const SizedBox(height: 24),
-        const Align(
+        Align(
           alignment: Alignment.centerLeft,
           child: Text(
             "Today's Times",
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Colors.grey,
+              color: Colors.black.withAlpha(175),
               letterSpacing: 1.2,
             ),
           ),
@@ -296,13 +296,13 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
           end: Alignment.bottomRight,
           colors: [
             Color(0xFF1B5E20), // Dark Green
-            Color(0xFF2E7D32), // Light Green
+            Color.fromARGB(255, 11, 53, 12), // Light Green
           ],
         ),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B5E20).withOpacity(0.3),
+            color: const Color(0xFF1B5E20).withOpacity(0.65),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -321,7 +321,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                 ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
@@ -331,16 +331,21 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                       "NEXT: $_nextPrayerName",
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
               ),
+
               Text(
                 dateStr, // Using Melbourne date
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -356,10 +361,11 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
               ),
             ),
           ),
+          const SizedBox(height: 5),
           Center(
             child: Text(
               "STARTS IN $_countdown",
-              style: const TextStyle(color: Colors.white70, fontSize: 14),
+              style: const TextStyle(color: Colors.white, fontSize: 14),
             ),
           ),
           const SizedBox(height: 24),
@@ -510,7 +516,7 @@ class _PrayerList extends StatelessWidget {
             : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.blueGrey.withOpacity(0.05),
+            color: const Color.fromARGB(255, 22, 66, 11).withOpacity(0.4),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -521,12 +527,12 @@ class _PrayerList extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isActive ? const Color(0xFF1B5E20) : Colors.grey[100],
+              color: isActive ? const Color(0xFF1B5E20) : Colors.white,
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.access_time,
-              color: isActive ? Colors.white : Colors.grey,
+              color: isActive ? Colors.white : Colors.black.withAlpha(165),
             ),
           ),
           const SizedBox(width: 16),
@@ -546,9 +552,10 @@ class _PrayerList extends StatelessWidget {
                   "ADHAN $adhan",
                   style: TextStyle(
                     fontSize: 10,
+                    fontWeight: FontWeight.bold,
                     color: isActive
                         ? const Color(0xFF1B5E20).withOpacity(0.7)
-                        : Colors.grey,
+                        : Colors.black.withAlpha(145),
                   ),
                 ),
               ],
@@ -560,7 +567,7 @@ class _PrayerList extends StatelessWidget {
               Text(
                 (iqamah != null && iqamah.isNotEmpty) ? iqamah : adhan,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: isActive ? const Color(0xFF1B5E20) : Colors.black87,
                 ),
@@ -569,9 +576,10 @@ class _PrayerList extends StatelessWidget {
                 "IQAMAH",
                 style: TextStyle(
                   fontSize: 10,
+                  fontWeight: FontWeight.bold,
                   color: isActive
                       ? const Color(0xFF1B5E20).withOpacity(0.7)
-                      : Colors.grey,
+                      : Colors.black.withAlpha(145),
                 ),
               ),
             ],
@@ -639,13 +647,13 @@ class _MelbourneClockState extends State<_MelbourneClock> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.access_time_filled, size: 14, color: Colors.teal),
+        const Icon(Icons.access_time_filled, size: 15, color: Colors.teal),
         const SizedBox(width: 4),
         Text(
           "Melbourne: $_timeStr",
           style: TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
             color: Colors.teal[800],
           ),
         ),

@@ -104,13 +104,15 @@ class _PrayerDayCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: isToday
             ? Border.all(color: const Color(0xFF1B5E20), width: 2)
-            : Border.all(color: Colors.grey.withOpacity(0.1)),
+            : Border.all(
+                color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.4),
+              ),
         boxShadow: [
           BoxShadow(
             color: isToday
-                ? const Color(0xFF1B5E20).withOpacity(0.15)
+                ? const Color(0xFF1B5E20).withOpacity(0.4)
                 : Colors.black.withOpacity(0.05),
-            blurRadius: 15,
+            blurRadius: 5,
             offset: const Offset(0, 5),
           ),
         ],
@@ -126,7 +128,7 @@ class _PrayerDayCard extends StatelessWidget {
                       colors: [Color(0xFF1B5E20), Color(0xFF2E7D32)],
                     )
                   : null,
-              color: isToday ? null : Colors.grey[50],
+              color: isToday ? null : Colors.grey.withAlpha(30),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(18),
               ),
@@ -139,7 +141,9 @@ class _PrayerDayCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: isToday ? Colors.white : Colors.black87,
+                    color: isToday
+                        ? Colors.white
+                        : const Color.fromARGB(221, 0, 0, 0),
                   ),
                 ),
                 if (isToday)
@@ -160,8 +164,8 @@ class _PrayerDayCard extends StatelessWidget {
                         Text(
                           "TODAY",
                           style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
                             color: Colors.white,
                             letterSpacing: 0.5,
                           ),
@@ -217,13 +221,13 @@ class _PrayerDayCard extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, size: 20, color: Colors.grey[400]),
+          Icon(icon, size: 20, color: Colors.black.withAlpha(125)),
           const SizedBox(height: 8),
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
+              fontSize: 13,
+              color: Colors.black.withAlpha(125),
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
             ),
@@ -231,10 +235,10 @@ class _PrayerDayCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             time,
-            style: const TextStyle(
-              fontSize: 15,
+            style: TextStyle(
+              fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Colors.black87,
+              color: Colors.black.withAlpha(185),
             ),
             textAlign: TextAlign.center,
           ),
