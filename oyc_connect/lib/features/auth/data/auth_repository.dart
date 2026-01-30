@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 class AuthRepository {
   final SupabaseClient _supabase;
@@ -18,6 +19,12 @@ class AuthRepository {
         password: password,
         data: {'full_name': fullName, 'phone': phone},
       );
+
+      // Enable notifications after successful signup
+      if (response.user != null) {
+        OneSignal.login(response.user!.id);
+      }
+
       return response;
     } on AuthException catch (e) {
       throw _handleAuthError(e);
@@ -36,6 +43,12 @@ class AuthRepository {
         email: email,
         password: password,
       );
+
+      // Enable notifications after successful login
+      if (response.user != null) {
+        OneSignal.login(response.user!.id);
+      }
+
       return response;
     } on AuthException catch (e) {
       throw _handleAuthError(e);
@@ -56,6 +69,10 @@ class AuthRepository {
 
   // Sign Out
   Future<void> signOut() async {
+    // Logout from OneSignal to stop receiving notifications
+    await OneSignal.logout();
+
+    // Sign out from Supabase
     await _supabase.auth.signOut();
   }
 

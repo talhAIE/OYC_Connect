@@ -30,7 +30,19 @@ mixin _$Event {
   @JsonKey(name: 'image_url')
   String? get imageUrl => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_featured')
-  bool get isFeatured => throw _privateConstructorUsedError;
+  bool get isFeatured => throw _privateConstructorUsedError; // New fields for enhanced event details
+  @JsonKey(name: 'event_type')
+  String? get eventType => throw _privateConstructorUsedError;
+  String? get organizer => throw _privateConstructorUsedError;
+  @JsonKey(name: 'contact_info')
+  String? get contactInfo => throw _privateConstructorUsedError;
+  @JsonKey(name: 'registration_link')
+  String? get registrationLink => throw _privateConstructorUsedError;
+  @JsonKey(name: 'end_time')
+  DateTime? get endTime => throw _privateConstructorUsedError;
+  int? get capacity => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_registration_required')
+  bool get isRegistrationRequired => throw _privateConstructorUsedError;
 
   /// Serializes this Event to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -54,6 +66,13 @@ abstract class $EventCopyWith<$Res> {
     String? location,
     @JsonKey(name: 'image_url') String? imageUrl,
     @JsonKey(name: 'is_featured') bool isFeatured,
+    @JsonKey(name: 'event_type') String? eventType,
+    String? organizer,
+    @JsonKey(name: 'contact_info') String? contactInfo,
+    @JsonKey(name: 'registration_link') String? registrationLink,
+    @JsonKey(name: 'end_time') DateTime? endTime,
+    int? capacity,
+    @JsonKey(name: 'is_registration_required') bool isRegistrationRequired,
   });
 }
 
@@ -79,6 +98,13 @@ class _$EventCopyWithImpl<$Res, $Val extends Event>
     Object? location = freezed,
     Object? imageUrl = freezed,
     Object? isFeatured = null,
+    Object? eventType = freezed,
+    Object? organizer = freezed,
+    Object? contactInfo = freezed,
+    Object? registrationLink = freezed,
+    Object? endTime = freezed,
+    Object? capacity = freezed,
+    Object? isRegistrationRequired = null,
   }) {
     return _then(
       _value.copyWith(
@@ -110,6 +136,34 @@ class _$EventCopyWithImpl<$Res, $Val extends Event>
                 ? _value.isFeatured
                 : isFeatured // ignore: cast_nullable_to_non_nullable
                       as bool,
+            eventType: freezed == eventType
+                ? _value.eventType
+                : eventType // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            organizer: freezed == organizer
+                ? _value.organizer
+                : organizer // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            contactInfo: freezed == contactInfo
+                ? _value.contactInfo
+                : contactInfo // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            registrationLink: freezed == registrationLink
+                ? _value.registrationLink
+                : registrationLink // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            endTime: freezed == endTime
+                ? _value.endTime
+                : endTime // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            capacity: freezed == capacity
+                ? _value.capacity
+                : capacity // ignore: cast_nullable_to_non_nullable
+                      as int?,
+            isRegistrationRequired: null == isRegistrationRequired
+                ? _value.isRegistrationRequired
+                : isRegistrationRequired // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -132,6 +186,13 @@ abstract class _$$EventImplCopyWith<$Res> implements $EventCopyWith<$Res> {
     String? location,
     @JsonKey(name: 'image_url') String? imageUrl,
     @JsonKey(name: 'is_featured') bool isFeatured,
+    @JsonKey(name: 'event_type') String? eventType,
+    String? organizer,
+    @JsonKey(name: 'contact_info') String? contactInfo,
+    @JsonKey(name: 'registration_link') String? registrationLink,
+    @JsonKey(name: 'end_time') DateTime? endTime,
+    int? capacity,
+    @JsonKey(name: 'is_registration_required') bool isRegistrationRequired,
   });
 }
 
@@ -156,6 +217,13 @@ class __$$EventImplCopyWithImpl<$Res>
     Object? location = freezed,
     Object? imageUrl = freezed,
     Object? isFeatured = null,
+    Object? eventType = freezed,
+    Object? organizer = freezed,
+    Object? contactInfo = freezed,
+    Object? registrationLink = freezed,
+    Object? endTime = freezed,
+    Object? capacity = freezed,
+    Object? isRegistrationRequired = null,
   }) {
     return _then(
       _$EventImpl(
@@ -187,6 +255,34 @@ class __$$EventImplCopyWithImpl<$Res>
             ? _value.isFeatured
             : isFeatured // ignore: cast_nullable_to_non_nullable
                   as bool,
+        eventType: freezed == eventType
+            ? _value.eventType
+            : eventType // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        organizer: freezed == organizer
+            ? _value.organizer
+            : organizer // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        contactInfo: freezed == contactInfo
+            ? _value.contactInfo
+            : contactInfo // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        registrationLink: freezed == registrationLink
+            ? _value.registrationLink
+            : registrationLink // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        endTime: freezed == endTime
+            ? _value.endTime
+            : endTime // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        capacity: freezed == capacity
+            ? _value.capacity
+            : capacity // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        isRegistrationRequired: null == isRegistrationRequired
+            ? _value.isRegistrationRequired
+            : isRegistrationRequired // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -203,6 +299,14 @@ class _$EventImpl implements _Event {
     this.location,
     @JsonKey(name: 'image_url') this.imageUrl,
     @JsonKey(name: 'is_featured') this.isFeatured = false,
+    @JsonKey(name: 'event_type') this.eventType,
+    this.organizer,
+    @JsonKey(name: 'contact_info') this.contactInfo,
+    @JsonKey(name: 'registration_link') this.registrationLink,
+    @JsonKey(name: 'end_time') this.endTime,
+    this.capacity,
+    @JsonKey(name: 'is_registration_required')
+    this.isRegistrationRequired = false,
   });
 
   factory _$EventImpl.fromJson(Map<String, dynamic> json) =>
@@ -225,10 +329,30 @@ class _$EventImpl implements _Event {
   @override
   @JsonKey(name: 'is_featured')
   final bool isFeatured;
+  // New fields for enhanced event details
+  @override
+  @JsonKey(name: 'event_type')
+  final String? eventType;
+  @override
+  final String? organizer;
+  @override
+  @JsonKey(name: 'contact_info')
+  final String? contactInfo;
+  @override
+  @JsonKey(name: 'registration_link')
+  final String? registrationLink;
+  @override
+  @JsonKey(name: 'end_time')
+  final DateTime? endTime;
+  @override
+  final int? capacity;
+  @override
+  @JsonKey(name: 'is_registration_required')
+  final bool isRegistrationRequired;
 
   @override
   String toString() {
-    return 'Event(id: $id, title: $title, description: $description, eventDate: $eventDate, location: $location, imageUrl: $imageUrl, isFeatured: $isFeatured)';
+    return 'Event(id: $id, title: $title, description: $description, eventDate: $eventDate, location: $location, imageUrl: $imageUrl, isFeatured: $isFeatured, eventType: $eventType, organizer: $organizer, contactInfo: $contactInfo, registrationLink: $registrationLink, endTime: $endTime, capacity: $capacity, isRegistrationRequired: $isRegistrationRequired)';
   }
 
   @override
@@ -247,7 +371,20 @@ class _$EventImpl implements _Event {
             (identical(other.imageUrl, imageUrl) ||
                 other.imageUrl == imageUrl) &&
             (identical(other.isFeatured, isFeatured) ||
-                other.isFeatured == isFeatured));
+                other.isFeatured == isFeatured) &&
+            (identical(other.eventType, eventType) ||
+                other.eventType == eventType) &&
+            (identical(other.organizer, organizer) ||
+                other.organizer == organizer) &&
+            (identical(other.contactInfo, contactInfo) ||
+                other.contactInfo == contactInfo) &&
+            (identical(other.registrationLink, registrationLink) ||
+                other.registrationLink == registrationLink) &&
+            (identical(other.endTime, endTime) || other.endTime == endTime) &&
+            (identical(other.capacity, capacity) ||
+                other.capacity == capacity) &&
+            (identical(other.isRegistrationRequired, isRegistrationRequired) ||
+                other.isRegistrationRequired == isRegistrationRequired));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -261,6 +398,13 @@ class _$EventImpl implements _Event {
     location,
     imageUrl,
     isFeatured,
+    eventType,
+    organizer,
+    contactInfo,
+    registrationLink,
+    endTime,
+    capacity,
+    isRegistrationRequired,
   );
 
   /// Create a copy of Event
@@ -286,6 +430,14 @@ abstract class _Event implements Event {
     final String? location,
     @JsonKey(name: 'image_url') final String? imageUrl,
     @JsonKey(name: 'is_featured') final bool isFeatured,
+    @JsonKey(name: 'event_type') final String? eventType,
+    final String? organizer,
+    @JsonKey(name: 'contact_info') final String? contactInfo,
+    @JsonKey(name: 'registration_link') final String? registrationLink,
+    @JsonKey(name: 'end_time') final DateTime? endTime,
+    final int? capacity,
+    @JsonKey(name: 'is_registration_required')
+    final bool isRegistrationRequired,
   }) = _$EventImpl;
 
   factory _Event.fromJson(Map<String, dynamic> json) = _$EventImpl.fromJson;
@@ -306,7 +458,26 @@ abstract class _Event implements Event {
   String? get imageUrl;
   @override
   @JsonKey(name: 'is_featured')
-  bool get isFeatured;
+  bool get isFeatured; // New fields for enhanced event details
+  @override
+  @JsonKey(name: 'event_type')
+  String? get eventType;
+  @override
+  String? get organizer;
+  @override
+  @JsonKey(name: 'contact_info')
+  String? get contactInfo;
+  @override
+  @JsonKey(name: 'registration_link')
+  String? get registrationLink;
+  @override
+  @JsonKey(name: 'end_time')
+  DateTime? get endTime;
+  @override
+  int? get capacity;
+  @override
+  @JsonKey(name: 'is_registration_required')
+  bool get isRegistrationRequired;
 
   /// Create a copy of Event
   /// with the given fields replaced by the non-null parameter values.

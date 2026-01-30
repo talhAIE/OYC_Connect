@@ -21,6 +21,10 @@ import '../../features/admin/presentation/pages/manage_announcements_page.dart';
 import '../../features/admin/presentation/pages/jummah_settings_page.dart';
 
 import '../../features/prayer_times/presentation/pages/prayer_calendar_page.dart';
+import '../../features/classes/presentation/pages/classes_schedule_page.dart';
+import '../../features/classes/presentation/pages/manage_schedule_page.dart';
+import '../../features/classes/presentation/pages/manage_classes_page.dart';
+import '../../features/classes/presentation/pages/manage_teachers_page.dart';
 import '../presentation/main_scaffold.dart';
 
 // We need a provider for the router to listen to auth changes
@@ -97,6 +101,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
+                path: '/classes',
+                builder: (context, state) => const ClassesSchedulePage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
                 path: '/profile',
                 builder: (context, state) => const ProfilePage(),
                 routes: [
@@ -129,6 +141,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'jummah-settings',
                         builder: (context, state) => const JummahSettingsPage(),
+                      ),
+                      GoRoute(
+                        path: 'schedule',
+                        builder: (context, state) => const ManageSchedulePage(),
+                      ),
+                      GoRoute(
+                        path: 'classes',
+                        builder: (context, state) => const ManageClassesPage(),
+                      ),
+                      GoRoute(
+                        path: 'teachers',
+                        builder: (context, state) => const ManageTeachersPage(),
                       ),
                     ],
                   ),

@@ -68,6 +68,17 @@ class AdminDashboardPage extends ConsumerWidget {
                 context.push('/profile/admin/jummah-settings');
               },
             ),
+            const SizedBox(height: 16),
+            _buildAdminTile(
+              context,
+              title: "Manage Weekly Classes",
+              subtitle: "Update classes, teachers & schedules",
+              icon: Icons.school,
+              color: Colors.purple,
+              onTap: () {
+                context.push('/profile/admin/schedule');
+              },
+            ),
           ],
         ),
       ),
