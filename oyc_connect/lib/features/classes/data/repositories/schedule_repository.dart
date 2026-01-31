@@ -4,63 +4,87 @@ import '../models/weekly_schedule_model.dart';
 
 part 'schedule_repository.g.dart';
 
+@riverpod
+ScheduleRepository scheduleRepository(ScheduleRepositoryRef ref) {
+  return ScheduleRepository(Supabase.instance.client);
+}
+
 class ScheduleRepository {
   final SupabaseClient _supabase;
 
   ScheduleRepository(this._supabase);
 
+  // Helper to retry request on JWT expiry (fallback to Anon)
+  Future<T> _safeExecute<T>(Future<T> Function() apiCall) async {
+    try {
+      return await apiCall();
+    } on PostgrestException catch (e) {
+      // PGRST303 is the code for JWT expired
+      if (e.message.contains('JWT expired') || e.code == 'PGRST303') {
+        // Token expired? Sign out to use Anon key for public access.
+        await _supabase.auth.signOut();
+        return await apiCall(); // Retry
+      }
+      rethrow;
+    }
+  }
+
   // Fetch all schedules with JOIN to get class and teacher names
   Future<List<WeeklyScheduleModel>> getAllSchedules() async {
-    final response = await _supabase
-        .from('weekly_schedules')
-        .select('''
+    return _safeExecute(() async {
+      final response = await _supabase
+          .from('weekly_schedules')
+          .select('''
           *,
           classes!weekly_schedules_class_id_fkey(name),
           teachers!weekly_schedules_teacher_id_fkey(name)
         ''')
-        .order('day_of_week', ascending: true);
+          .order('day_of_week', ascending: true);
 
-    return (response as List).map((json) {
-      // Flatten the nested structure
-      final flatJson = Map<String, dynamic>.from(json);
-      if (json['classes'] != null) {
-        flatJson['class_name'] = json['classes']['name'];
-      }
-      if (json['teachers'] != null) {
-        flatJson['teacher_name'] = json['teachers']['name'];
-      }
-      flatJson.remove('classes');
-      flatJson.remove('teachers');
+      return (response as List).map((json) {
+        // Flatten the nested structure
+        final flatJson = Map<String, dynamic>.from(json);
+        if (json['classes'] != null) {
+          flatJson['class_name'] = json['classes']['name'];
+        }
+        if (json['teachers'] != null) {
+          flatJson['teacher_name'] = json['teachers']['name'];
+        }
+        flatJson.remove('classes');
+        flatJson.remove('teachers');
 
-      return WeeklyScheduleModel.fromJson(flatJson);
-    }).toList();
+        return WeeklyScheduleModel.fromJson(flatJson);
+      }).toList();
+    });
   }
 
   // Get schedules by type (weekly or quran)
   Future<List<WeeklyScheduleModel>> getSchedulesByType(String type) async {
-    final response = await _supabase
-        .from('weekly_schedules')
-        .select('''
+    return _safeExecute(() async {
+      final response = await _supabase
+          .from('weekly_schedules')
+          .select('''
           *,
           classes!weekly_schedules_class_id_fkey(name),
           teachers!weekly_schedules_teacher_id_fkey(name)
         ''')
-        .eq('schedule_type', type)
-        .order('day_of_week', ascending: true);
+          .eq('schedule_type', type)
+          .order('day_of_week', ascending: true);
 
-    return (response as List).map((json) {
-      final flatJson = Map<String, dynamic>.from(json);
-      if (json['classes'] != null) {
-        flatJson['class_name'] = json['classes']['name'];
-      }
-      if (json['teachers'] != null) {
-        flatJson['teacher_name'] = json['teachers']['name'];
-      }
-      flatJson.remove('classes');
-      flatJson.remove('teachers');
+      return (response as List).map((json) {
+        final flatJson = Map<String, dynamic>.from(json);
+        if (json['classes'] != null) {
+          flatJson['class_name'] = json['classes']['name'];
+        }
+        if (json['teachers'] != null) {
+          flatJson['teacher_name'] = json['teachers']['name'];
+        }
+        flatJson.remove('classes');
+        flatJson.remove('teachers');
 
-      return WeeklyScheduleModel.fromJson(flatJson);
-    }).toList();
+        return WeeklyScheduleModel.fromJson(flatJson);
+      }).toList();
+    });
   }
 
   // Add new schedule
@@ -111,9 +135,4 @@ class ScheduleRepository {
 
     await _supabase.from('weekly_schedules').update(updates).eq('id', id);
   }
-}
-
-@riverpod
-ScheduleRepository scheduleRepository(ScheduleRepositoryRef ref) {
-  return ScheduleRepository(Supabase.instance.client);
 }

@@ -38,12 +38,19 @@ class CommunityRepository {
   }
 
   Future<void> upsertEvent(Event event) async {
-    final data = event.toJson();
-    if (event.id == 0) {
-      data.remove('id');
+    // Manually construct map to ensure only existing DB columns are sent
+    // DB Columns: id, title, description, event_date, location, image_url
+    final Map<String, dynamic> data = {
+      'title': event.title,
+      'description': event.description,
+      'event_date': event.eventDate.toIso8601String(),
+      'location': event.location,
+      'image_url': event.imageUrl,
+    };
+
+    if (event.id != 0) {
+      data['id'] = event.id;
     }
-    // Remove is_featured as the column might not exist in the database yet
-    data.remove('is_featured');
 
     await _client.from('events').upsert(data);
   }

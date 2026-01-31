@@ -3,6 +3,7 @@ import '../../data/models/profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 part 'profile_provider.g.dart';
 
@@ -50,6 +51,15 @@ class Profile extends _$Profile {
     }
 
     try {
+      // Sync with OneSignal
+      // If enabled = true, we want to OPT IN
+      // If enabled = false, we want to OPT OUT
+      if (enabled) {
+        OneSignal.User.pushSubscription.optIn();
+      } else {
+        OneSignal.User.pushSubscription.optOut();
+      }
+
       await ref
           .read(profileRepositoryProvider)
           .updateProfile(notificationsEnabled: enabled);

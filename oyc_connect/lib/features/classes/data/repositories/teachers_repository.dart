@@ -9,16 +9,33 @@ class TeachersRepository {
 
   TeachersRepository(this._supabase);
 
+  // Helper to retry request on JWT expiry (fallback to Anon)
+  Future<T> _safeExecute<T>(Future<T> Function() apiCall) async {
+    try {
+      return await apiCall();
+    } on PostgrestException catch (e) {
+      // PGRST303 is the code for JWT expired
+      if (e.message.contains('JWT expired') || e.code == 'PGRST303') {
+        // Token expired? Sign out to use Anon key for public access.
+        await _supabase.auth.signOut();
+        return await apiCall(); // Retry
+      }
+      rethrow;
+    }
+  }
+
   // Fetch all teachers
   Future<List<TeacherModel>> getAllTeachers() async {
-    final response = await _supabase
-        .from('teachers')
-        .select()
-        .order('name', ascending: true);
+    return _safeExecute(() async {
+      final response = await _supabase
+          .from('teachers')
+          .select()
+          .order('name', ascending: true);
 
-    return (response as List)
-        .map((json) => TeacherModel.fromJson(json))
-        .toList();
+      return (response as List)
+          .map((json) => TeacherModel.fromJson(json))
+          .toList();
+    });
   }
 
   // Add new teacher

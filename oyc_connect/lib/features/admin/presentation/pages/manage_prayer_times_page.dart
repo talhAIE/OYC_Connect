@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;
+import 'package:timezone/timezone.dart' as tz;
 import '../../../../core/theme/app_theme.dart';
 import '../../../../features/prayer_times/data/models/prayer_time_model.dart';
 import '../../../../features/prayer_times/presentation/providers/prayer_times_provider.dart';
@@ -17,7 +17,7 @@ class ManagePrayerTimesPage extends ConsumerStatefulWidget {
 }
 
 class _ManagePrayerTimesPageState extends ConsumerState<ManagePrayerTimesPage> {
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
   bool _isLoading = false;
 
   // Controllers
@@ -36,6 +36,13 @@ class _ManagePrayerTimesPageState extends ConsumerState<ManagePrayerTimesPage> {
   @override
   void initState() {
     super.initState();
+    try {
+      final melbourne = tz.getLocation('Australia/Melbourne');
+      _selectedDate = tz.TZDateTime.now(melbourne);
+    } catch (e) {
+      // Fallback if timezone not found (though initialized in main)
+      _selectedDate = DateTime.now();
+    }
     _fetchData();
   }
 
@@ -174,9 +181,15 @@ class _ManagePrayerTimesPageState extends ConsumerState<ManagePrayerTimesPage> {
   Future<void> _syncFromMasjidal() async {
     setState(() => _isLoading = true);
     try {
+      // 0-indexed month (0=Jan, 11=Dec) as per widget API
+      final year = _selectedDate.year;
+      final monthIndex = _selectedDate.month - 1;
+      final monthStr = monthIndex.toString().padLeft(2, '0');
+
       final url = Uri.parse(
-        'https://timing.athanplus.com/masjid/widgets/monthly?theme=3&masjid_id=keLQajLM',
+        'https://timing.athanplus.com/masjid/widgets/monthly?theme=3&masjid_id=keLQajLM&action=next&date=$year-$monthStr-01',
       );
+
       final response = await http.get(
         url,
         headers: {
@@ -194,31 +207,9 @@ class _ManagePrayerTimesPageState extends ConsumerState<ManagePrayerTimesPage> {
 
       final repo = ref.read(prayerTimesRepositoryProvider);
 
-      // We need to determine the month and year from the page if possible,
-      // but for simplicity, let's assume the widget returns the current month by default
-      // or we can parse the header.
-      // The header has "JANUARY ( RAJAB & SHABAN )"
-
-      final headerText =
-          document.querySelector('.pagesubheading3')?.text.trim() ?? '';
-      // Extract Month name, e.g., "JANUARY"
-      final monthName = headerText.split('(').first.trim();
-
-      // Map full month name to month number
-      int monthNum = 1;
-      try {
-        monthNum = DateFormat('MMMM').parse(monthName).month;
-      } catch (e) {
-        // Fallback or error if month parse fails.
-        // For now, let's assume standard names.
-        // If parsing fails, we might default to current month or throw.
-        monthNum = DateTime.now().month; // Fallback
-      }
-
-      // Year: The widget might not explicitly show the year in a simplified way,
-      // but usually it defaults to current/requested.
-      // Let's assume current year for safety unless we find year in the page.
-      final currentYear = DateTime.now().year;
+      // Use the selected date year/month directly
+      final targetYear = _selectedDate.year;
+      final targetMonth = _selectedDate.month;
 
       int count = 0;
 
@@ -237,7 +228,7 @@ class _ManagePrayerTimesPageState extends ConsumerState<ManagePrayerTimesPage> {
 
         if (day == null) continue;
 
-        final date = DateTime(currentYear, monthNum, day);
+        final date = DateTime(targetYear, targetMonth, day);
 
         // Helper to parse "4:09 | 5:00" -> Adhan, Iqamah
         // Also handling AM/PM rule.
@@ -290,9 +281,12 @@ class _ManagePrayerTimesPageState extends ConsumerState<ManagePrayerTimesPage> {
       ref.invalidate(todayPrayerTimeProvider);
 
       if (mounted) {
+        final dateStr = DateFormat('MMMM yyyy').format(_selectedDate);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Synced $count days successfully from Masjidal'),
+            content: Text(
+              'Synced $count days for $dateStr successfully from Masjidal',
+            ),
           ),
         );
         _fetchData(); // Refresh current view
