@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oyc_connect/features/auth/presentation/pages/login_page.dart';
 import '../../../../core/theme/app_pallete.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_button.dart';
@@ -69,24 +70,20 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     final isLoading = ref.watch(authControllerProvider).isLoading;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 20),
                 Center(
-                  child: Image.asset('assets/images/oyc_logo.jpeg', height: 80),
+                  child: Image.asset(
+                    'assets/images/oyc_logo.jpeg',
+                    height: 120,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 const Text(
@@ -98,9 +95,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Join the OYC Connect community today.',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black.withAlpha(165),
+                  ),
                 ),
                 const SizedBox(height: 40),
 
@@ -189,6 +189,35 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   isLoading: isLoading,
                 ),
                 const SizedBox(height: 16),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Already have an account? ',
+                      style: TextStyle(color: Colors.black.withAlpha(165)),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginPage(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(
+                          color: Color(
+                            0xFF1E8449,
+                          ), // Greenish from the UI image for "Create Account"
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

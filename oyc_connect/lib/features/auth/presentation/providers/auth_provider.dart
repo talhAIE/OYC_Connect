@@ -62,3 +62,8 @@ class AuthController extends Notifier<AsyncValue<void>> {
     await _authRepository.signOut();
   }
 }
+
+// Simple provider to listen to auth state changes
+final authStateProvider = StreamProvider<AuthState>((ref) {
+  return ref.watch(authRepositoryProvider).authStateChanges;
+});

@@ -1,0 +1,897 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:ntp/ntp.dart';
+import 'dart:async';
+import '../../../prayer_times/presentation/providers/prayer_times_provider.dart';
+import '../../../prayer_times/data/models/prayer_time_model.dart';
+import '../../../prayer_times/data/models/jummah_config.dart';
+import '../widgets/jummah_detail_dialog.dart';
+import '../../../community/presentation/providers/community_providers.dart';
+import '../../../classes/presentation/providers/classes_providers.dart';
+
+class HomePage extends ConsumerStatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  ConsumerState<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends ConsumerState<HomePage> {
+  Future<void> _refreshAll() async {
+    // Invalidate Prayer Times
+    ref.invalidate(todayPrayerTimeProvider);
+    ref.invalidate(jummahConfigProvider);
+
+    // Invalidate Community
+    ref.invalidate(eventsProvider);
+    ref.invalidate(announcementsProvider);
+
+    // Invalidate Classes
+    ref.invalidate(weeklySchedulesProvider);
+    ref.invalidate(quranSchedulesProvider);
+
+    // Add small delay for UI effect
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final prayerTimeAsync = ref.watch(todayPrayerTimeProvider);
+    final jummahConfigAsync = ref.watch(jummahConfigProvider);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA), // Light background
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _refreshAll,
+          color: const Color(0xFF1B5E20),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 24),
+                prayerTimeAsync.when(
+                  data: (prayerTime) {
+                    if (prayerTime == null) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: Text("No prayer times found for today."),
+                        ),
+                      );
+                    }
+                    return _PrayerContent(
+                      prayerTime: prayerTime,
+                      jummahConfig: jummahConfigAsync.asData?.value,
+                    );
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (err, stack) => Center(child: Text('Error: $err')),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Center(
+      child: Column(
+        children: [
+          Text(
+            'Our Youth Center',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: const Color(0xFF1B5E20), // Deep Green matching card
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '1881 MUSALLA', // Uppercase for premium feel
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: const Color(0xFFC0A000), // Muted Gold
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 3.0, // Wide spacing
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrayerContent extends StatelessWidget {
+  final dynamic prayerTime;
+  final JummahConfig? jummahConfig;
+  const _PrayerContent({required this.prayerTime, this.jummahConfig});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Time just above the card, left aligned
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: EdgeInsets.only(left: 4.0, bottom: 8.0),
+            child: _MelbourneClock(),
+          ),
+        ),
+        _NextPrayerCard(prayerTime: prayerTime),
+        const SizedBox(height: 24),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Today's Times",
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.black.withAlpha(175),
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // We need next prayer info to highlight the list, but for now let's just highlight based on time
+        _PrayerList(prayerTime: prayerTime, jummahConfig: jummahConfig),
+      ],
+    );
+  }
+}
+
+class _NextPrayerCard extends StatefulWidget {
+  final PrayerTime? prayerTime;
+  const _NextPrayerCard({required this.prayerTime});
+
+  @override
+  State<_NextPrayerCard> createState() => _NextPrayerCardState();
+}
+
+class _NextPrayerCardState extends State<_NextPrayerCard> {
+  Timer? _timer;
+  String _nextPrayerName = "--";
+  String _nextPrayerTime = "--:--";
+  String _countdown = "--";
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant _NextPrayerCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.prayerTime != oldWidget.prayerTime) {
+      _updateCalculation();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    _updateCalculation();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _updateCalculation();
+    });
+  }
+
+  void _updateCalculation() {
+    if (widget.prayerTime == null) return;
+
+    final melbourne = tz.getLocation('Australia/Melbourne');
+    final now = tz.TZDateTime.now(melbourne);
+    final pt = widget.prayerTime!;
+
+    // Robust Parser using Regex to avoid format/locale issues
+    // Matches "4:39" or "4:39 AM" or "4:39AM" etc.
+    tz.TZDateTime? parseTime(String? timeStr) {
+      if (timeStr == null || timeStr.isEmpty) return null;
+      try {
+        final re = RegExp(r'(\d+):(\d+)\s*(AM|PM)?', caseSensitive: false);
+        final match = re.firstMatch(timeStr);
+        if (match == null) return null;
+
+        int hour = int.parse(match.group(1)!);
+        int minute = int.parse(match.group(2)!);
+        String? period = match.group(3)?.toUpperCase();
+
+        // Handle 12-hour format if AM/PM is present
+        if (period != null) {
+          if (period == 'PM' && hour != 12) hour += 12;
+          if (period == 'AM' && hour == 12) hour = 0;
+        }
+
+        return tz.TZDateTime(
+          melbourne,
+          now.year,
+          now.month,
+          now.day,
+          hour,
+          minute,
+        );
+      } catch (e) {
+        return null;
+      }
+    }
+
+    final prayers = {
+      "FAJR": parseTime(pt.fajr),
+      "DHUHR": parseTime(pt.dhuhr),
+      "ASR": parseTime(pt.asr),
+      "MAGHRIB": parseTime(pt.maghrib),
+      "ISHA": parseTime(pt.isha),
+    };
+
+    // Check if we didn't get any valid times
+    if (prayers.values.every((v) => v == null)) {
+      if (mounted)
+        setState(() {
+          _countdown = "Error Parsing";
+        });
+      return;
+    }
+
+    // Sort
+    final sortedKeys = prayers.keys.toList()
+      ..sort((a, b) {
+        final tA = prayers[a];
+        final tB = prayers[b];
+        if (tA == null) return 1;
+        if (tB == null) return -1;
+        return tA.compareTo(tB);
+      });
+
+    String? nextName;
+    tz.TZDateTime? nextTime;
+
+    for (var key in sortedKeys) {
+      final t = prayers[key];
+      if (t != null && t.isAfter(now)) {
+        nextName = key;
+        nextTime = t;
+        break;
+      }
+    }
+
+    // Fallback: Tomorrow Fajr
+    if (nextName == null) {
+      nextName = "FAJR (TOMORROW)";
+      final t = prayers["FAJR"];
+      if (t != null) {
+        nextTime = t.add(const Duration(days: 1));
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _nextPrayerName = nextName ?? "NONE";
+
+        // Show Adhan Time
+        _nextPrayerTime = nextTime != null
+            ? DateFormat.jm().format(nextTime)
+            : "--:--";
+
+        if (nextTime != null) {
+          final diff = nextTime.difference(now);
+          if (diff.isNegative) {
+            _countdown = "NOW";
+          } else {
+            final hours = diff.inHours;
+            final minutes = diff.inMinutes % 60;
+            final seconds = diff.inSeconds % 60;
+            _countdown = "${hours}H ${minutes}M ${seconds}S";
+          }
+        } else {
+          _countdown = "--";
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Formatted Date
+    final melbourne = tz.getLocation('Australia/Melbourne');
+    final now = tz.TZDateTime.now(melbourne);
+    final dateStr = DateFormat('EEEE, d MMM').format(now);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF004D40).withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF00695C), // Rich Teal
+            Color(0xFF004D40), // Darker Teal
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Background Pattern
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Icon(
+              Icons.mosque,
+              size: 140,
+              color: Colors.white.withOpacity(0.04),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 20.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Row: Label + Date
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "NEXT PRAYER",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    Text(
+                      dateStr,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Main Content: Name & Time
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Name
+                    Text(
+                      _nextPrayerName.toUpperCase(),
+                      style: const TextStyle(
+                        color: Color(0xFFFFD740), // Amber/Gold accent
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    // Time
+                    Text(
+                      _nextPrayerTime,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 42,
+                        fontWeight: FontWeight.w300,
+                        letterSpacing: -1.0,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Bottom Row: Countdown & Action
+                Row(
+                  children: [
+                    // Countdown Pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.timer_outlined,
+                            color: Colors.white.withOpacity(0.9),
+                            size: 14,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            "In $_countdown",
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.95),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+
+                    // Simple text button, less height
+                    InkWell(
+                      onTap: () => context.go('/home/prayer-calendar'),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        child: Row(
+                          children: const [
+                            Text(
+                              "CALENDAR",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.white,
+                              size: 10,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrayerList extends StatelessWidget {
+  final dynamic prayerTime;
+  final JummahConfig? jummahConfig;
+  const _PrayerList({required this.prayerTime, this.jummahConfig});
+
+  @override
+  Widget build(BuildContext context) {
+    // We re-calculate current prayer here simply to highlight
+    final melbourne = tz.getLocation('Australia/Melbourne');
+    final now = tz.TZDateTime.now(melbourne);
+    final isFriday = now.weekday == DateTime.friday;
+
+    // Robust Parser (duplicated for now for simplicity in stateless widget)
+    tz.TZDateTime? parseTime(String? timeStr) {
+      if (timeStr == null || timeStr.isEmpty) return null;
+      try {
+        final re = RegExp(r'(\d+):(\d+)\s*(AM|PM)?', caseSensitive: false);
+        final match = re.firstMatch(timeStr);
+        if (match == null) return null;
+        int hour = int.parse(match.group(1)!);
+        int minute = int.parse(match.group(2)!);
+        String? period = match.group(3)?.toUpperCase();
+        if (period != null) {
+          if (period == 'PM' && hour != 12) hour += 12;
+          if (period == 'AM' && hour == 12) hour = 0;
+        }
+        return tz.TZDateTime(
+          melbourne,
+          now.year,
+          now.month,
+          now.day,
+          hour,
+          minute,
+        );
+      } catch (e) {
+        return null;
+      }
+    }
+
+    IconData getPrayerIcon(String name) {
+      switch (name) {
+        case "Fajr":
+          return Icons.wb_twilight; // Orange Sun
+        case "Sunrise":
+          return Icons.wb_iridescent; // Red Sun
+        case "Dhuhr":
+          return Icons.wb_sunny; // Yellow Sun
+        case "Asr":
+          return Icons.wb_cloudy; // Sun + Cloud
+        case "Maghrib": // Sunset
+          return Icons.wb_twilight;
+        case "Isha":
+          return Icons.nights_stay; // Moon
+        default:
+          return Icons.access_time_filled;
+      }
+    }
+
+    Color getPrayerColor(String name) {
+      switch (name) {
+        case "Fajr":
+          return Colors.orange;
+        case "Sunrise":
+          return Colors.redAccent;
+        case "Dhuhr":
+          return Colors.amber;
+        case "Asr":
+          return Colors.lightBlue; // Cloud color
+        case "Maghrib":
+          return Colors.deepOrange;
+        case "Isha":
+          return const Color(0xFF1A237E); // Indigo
+        default:
+          return const Color(0xFF1B5E20);
+      }
+    }
+
+    final prayers = {
+      "Fajr": parseTime(prayerTime.fajr),
+      "Dhuhr": parseTime(prayerTime.dhuhr),
+      "Asr": parseTime(prayerTime.asr),
+      "Maghrib": parseTime(prayerTime.maghrib),
+      "Isha": parseTime(prayerTime.isha),
+    };
+
+    // Let's reuse logic: Find first prayer > now.
+    String? nextName;
+    final sortedKeys = prayers.keys.toList()
+      ..sort((a, b) => (prayers[a]?.compareTo(prayers[b]!) ?? 0));
+
+    for (var key in sortedKeys) {
+      final t = prayers[key];
+      if (t != null && t.isAfter(now)) {
+        nextName = key;
+        break;
+      }
+    }
+
+    // If nextName is null (after Isha), usually we highlight Fajr (tomorrow) or keep Isha?
+    // Let's highlight Fajr if it's tomorrow.
+    final target = nextName ?? "Fajr";
+
+    return Column(
+      children: [
+        _buildPrayerItem(
+          "Fajr",
+          prayerTime.fajr,
+          prayerTime.fajrIqama,
+          target == "Fajr",
+          getPrayerIcon("Fajr"),
+          getPrayerColor("Fajr"),
+        ),
+        const SizedBox(height: 12),
+        const SizedBox(height: 12),
+        if (isFriday && jummahConfig != null)
+          _buildJummahItem(context, jummahConfig!, target == "Dhuhr")
+        else
+          _buildPrayerItem(
+            "Dhuhr",
+            prayerTime.dhuhr,
+            prayerTime.dhuhrIqama,
+            target == "Dhuhr",
+            getPrayerIcon("Dhuhr"),
+            getPrayerColor("Dhuhr"),
+          ),
+        const SizedBox(height: 12),
+        _buildPrayerItem(
+          "Asr",
+          prayerTime.asr,
+          prayerTime.asrIqama,
+          target == "Asr",
+          getPrayerIcon("Asr"),
+          getPrayerColor("Asr"),
+        ),
+        const SizedBox(height: 12),
+        _buildPrayerItem(
+          "Maghrib",
+          prayerTime.maghrib,
+          prayerTime.maghribIqama,
+          target == "Maghrib",
+          getPrayerIcon("Maghrib"),
+          getPrayerColor("Maghrib"),
+        ),
+        const SizedBox(height: 12),
+        _buildPrayerItem(
+          "Isha",
+          prayerTime.isha,
+          prayerTime.ishaIqama,
+          target == "Isha",
+          getPrayerIcon("Isha"),
+          getPrayerColor("Isha"),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrayerItem(
+    String name,
+    String adhan,
+    String? iqamah,
+    bool isActive,
+    IconData icon,
+    Color iconColor,
+  ) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: isActive ? Colors.green[50] : Colors.white, // Light Green
+        borderRadius: BorderRadius.circular(24),
+        border: isActive
+            ? Border.all(color: Colors.green.shade200, width: 1.5)
+            : Border.all(color: Colors.grey.withOpacity(0.15), width: 1),
+        boxShadow: isActive
+            ? [
+                BoxShadow(
+                  color: Colors.green.withOpacity(0.15),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ]
+            : [],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Row(
+            children: [
+              // Icon - Always Colored
+              Icon(
+                icon,
+                color: iconColor, // Icons colors DON'T change
+                size: 28,
+              ),
+              const SizedBox(width: 16),
+
+              // Texts
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87, // Always Black
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Adhan $adhan",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[700], // Always Grey
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Iqamah Text Only (No Box)
+              if (iqamah != null)
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      "IQAMAH",
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: isActive ? Colors.green[800] : Colors.teal,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      iqamah,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildJummahItem(
+    BuildContext context,
+    JummahConfig config,
+    bool isActive,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => JummahDetailDialog(config: config),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white, // Light theme
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.teal.withOpacity(0.3), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.teal.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.teal.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.mosque, color: Colors.teal),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Jummah Prayer",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal[800],
+                    ),
+                  ),
+                  Text(
+                    "Tap for details", // Helper text
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  config.khutbahTime,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal[800],
+                  ),
+                ),
+                Text(
+                  "KHUTBAH",
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MelbourneClock extends StatefulWidget {
+  const _MelbourneClock();
+
+  @override
+  State<_MelbourneClock> createState() => _MelbourneClockState();
+}
+
+class _MelbourneClockState extends State<_MelbourneClock> {
+  Timer? _timer;
+  String _timeStr = "--:--:--";
+  int _ntpOffset = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncNtp();
+    // Start timer immediately, updateTime will use 0 offset until sync completes
+    _updateTime();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _updateTime());
+  }
+
+  Future<void> _syncNtp() async {
+    try {
+      _ntpOffset = await NTP.getNtpOffset(localTime: DateTime.now());
+    } catch (_) {
+      // Fail silently, default to device time
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _updateTime() {
+    final melbourne = tz.getLocation('Australia/Melbourne');
+    // Adjust local device time by NTP offset to get "True" time
+    final trueNow = DateTime.now().add(Duration(milliseconds: _ntpOffset));
+    final nowMel = tz.TZDateTime.from(trueNow, melbourne);
+
+    final str = DateFormat('hh:mm:ss a').format(nowMel);
+
+    if (mounted) {
+      if (_timeStr != str) {
+        setState(() {
+          _timeStr = str;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      _timeStr,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: Colors.black, // "Just numbers in black"
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+}

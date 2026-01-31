@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_pallete.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_button.dart';
@@ -46,6 +47,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       next.when(
         data: (_) {
           showCustomSnackBar(context, 'Welcome back!');
+          context.go('/home');
         },
         error: (err, st) {
           showCustomSnackBar(context, err.toString(), isError: true);
@@ -69,7 +71,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   // Logo
                   Image.asset(
                     'assets/images/oyc_logo.jpeg',
-                    height: 100, // Adjust height as needed
+                    height: 120, // Adjust height as needed
                   ),
                   const SizedBox(height: 24),
 
@@ -83,9 +85,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Your spiritual journey, digitized.',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black.withAlpha(165),
+                    ),
                   ),
                   const SizedBox(height: 48),
 
@@ -137,9 +142,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     onPressed: () {
                       // TODO: Implement Forgot Password
                     },
-                    child: const Text(
+                    child: Text(
                       'FORGOT PASSWORD?',
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: Colors.black.withAlpha(150)),
                     ),
                   ),
 
@@ -149,9 +154,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         'New here? ',
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: Colors.black.withAlpha(165)),
                       ),
                       GestureDetector(
                         onTap: () {
