@@ -97,14 +97,14 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
                       const Icon(
                         Icons.info_outline,
                         color: Color(0xFF1976D2),
-                        size: 18,
+                        size: 20,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'All classes held between Maghrib & Isha, unless stated otherwise.',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 13,
                             color: Colors.blue[900],
                             fontWeight: FontWeight.w500,
                           ),
@@ -116,12 +116,12 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
                 const SizedBox(height: 20),
 
                 // Weekly Schedule Section
-                const Text(
+                Text(
                   'WEEKLY SCHEDULE',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey,
+                    color: Colors.black.withAlpha(185),
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -142,12 +142,12 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
                 const SizedBox(height: 20),
 
                 // Qur'an Classes Section
-                const Text(
+                Text(
                   "QUR'AN CLASSES",
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey,
+                    color: Colors.black.withAlpha(185),
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -283,7 +283,7 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
                 Text(
                   dayDisplay,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: iconColor,
                     letterSpacing: 0.3,
@@ -299,7 +299,7 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
                         text: TextSpan(
                           style: const TextStyle(
                             fontSize: 14,
-                            color: Colors.black87,
+                            color: Colors.black,
                           ),
                           children: [
                             TextSpan(
@@ -313,7 +313,7 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
                                 text: ' (${group.teacherName})',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey[600],
+                                  color: Colors.black.withAlpha(205),
                                   fontWeight: FontWeight.normal,
                                 ),
                               ),
@@ -339,12 +339,12 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.access_time, size: 12, color: iconColor),
+                  Icon(Icons.access_time, size: 13, color: iconColor),
                   const SizedBox(width: 4),
                   Text(
                     '${group.startTime}–${group.endTime}',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: iconColor,
                     ),

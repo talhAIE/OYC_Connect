@@ -83,29 +83,50 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
+  //   Widget _buildHeader() {
+  //     return Center(
+  //       child: Column(
+  //         children: [
+  //           const SizedBox(height: 0.01),
+  //           Text(
+  //             '1881 MUSALLA', // Uppercase for premium feel
+  //             textAlign: TextAlign.center,
+  //             style: TextStyle(
+  //               color: Color.fromARGB(255, 163, 129, 3), // Muted Gold
+  //               fontSize: 26,
+  //               fontWeight: FontWeight.w900,
+  //               letterSpacing: 2.5, // Wide spacing
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     );
+  //   }
+  // }
+
   Widget _buildHeader() {
     return Center(
-      child: Column(
-        children: [
-          Text(
-            'Our Youth Center',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: const Color(0xFF1B5E20), // Deep Green matching card
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: const [
+          // 🕌 Masjid Icon
+          Icon(
+            Icons.mosque,
+            size: 40,
+            color: Color.fromARGB(255, 163, 129, 3), // Muted Gold
           ),
-          const SizedBox(height: 2),
+
+          SizedBox(width: 10),
+
+          // 🏷️ Musalla Name
           Text(
-            '1881 MUSALLA', // Uppercase for premium feel
-            textAlign: TextAlign.center,
+            '1881 MUSALLA',
             style: TextStyle(
-              color: const Color(0xFFC0A000), // Muted Gold
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 3.0, // Wide spacing
+              color: Color.fromARGB(255, 163, 129, 3),
+              fontSize: 36,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2.5,
             ),
           ),
         ],
@@ -127,12 +148,12 @@ class _PrayerContent extends StatelessWidget {
         const Align(
           alignment: Alignment.centerLeft,
           child: Padding(
-            padding: EdgeInsets.only(left: 4.0, bottom: 8.0),
+            padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
             child: _MelbourneClock(),
           ),
         ),
         _NextPrayerCard(prayerTime: prayerTime),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         Align(
           alignment: Alignment.centerLeft,
           child: Text(
@@ -320,7 +341,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF004D40).withOpacity(0.3),
+            color: const Color.fromARGB(255, 22, 65, 16).withOpacity(0.7),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -329,8 +350,8 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF00695C), // Rich Teal
-            Color(0xFF004D40), // Darker Teal
+            Color.fromARGB(255, 1, 107, 1), // Rich Teal
+            Color.fromARGB(255, 29, 99, 1), // Darker Teal
           ],
         ),
       ),
@@ -343,7 +364,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
             child: Icon(
               Icons.mosque,
               size: 140,
-              color: Colors.white.withOpacity(0.04),
+              color: Colors.white.withOpacity(0.06),
             ),
           ),
           Padding(
@@ -361,18 +382,19 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                     Text(
                       "NEXT PRAYER",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                         letterSpacing: 1.0,
                       ),
                     ),
                     Text(
                       dateStr,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 12,
+                        color: Colors.white,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
+                        letterSpacing: 1.0,
                       ),
                     ),
                   ],
@@ -388,7 +410,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                     Text(
                       _nextPrayerName.toUpperCase(),
                       style: const TextStyle(
-                        color: Color(0xFFFFD740), // Amber/Gold accent
+                        color: Colors.white, // Amber/Gold accent
                         fontSize: 32,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0.5,
@@ -399,15 +421,15 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                       _nextPrayerTime,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 42,
-                        fontWeight: FontWeight.w300,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w400,
                         letterSpacing: -1.0,
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 18),
 
                 // Bottom Row: Countdown & Action
                 Row(
@@ -419,14 +441,14 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withOpacity(0.22),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
                           Icon(
                             Icons.timer_outlined,
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white,
                             size: 14,
                           ),
                           const SizedBox(width: 6),
@@ -443,33 +465,42 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                     ),
                     const Spacer(),
 
-                    // Simple text button, less height
-                    InkWell(
-                      onTap: () => context.go('/home/prayer-calendar'),
+                    Material(
+                      color: const Color.fromARGB(
+                        255,
+                        22,
+                        22,
+                        18,
+                      ).withOpacity(0.22), // 👈 background color
                       borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 6,
-                        ),
-                        child: Row(
-                          children: const [
-                            Text(
-                              "CALENDAR",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11,
-                                letterSpacing: 1.0,
+                      child: InkWell(
+                        onTap: () => context.go('/home/prayer-calendar'),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Text(
+                                "CALENDAR",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  letterSpacing: 1.0,
+                                ),
                               ),
-                            ),
-                            SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              color: Colors.white,
-                              size: 10,
-                            ),
-                          ],
+                              SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.white,
+                                size: 10,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -596,8 +627,8 @@ class _PrayerList extends StatelessWidget {
           getPrayerIcon("Fajr"),
           getPrayerColor("Fajr"),
         ),
-        const SizedBox(height: 12),
-        const SizedBox(height: 12),
+        const SizedBox(height: 2),
+        const SizedBox(height: 2),
         if (isFriday && jummahConfig != null)
           _buildJummahItem(context, jummahConfig!, target == "Dhuhr")
         else
@@ -609,7 +640,7 @@ class _PrayerList extends StatelessWidget {
             getPrayerIcon("Dhuhr"),
             getPrayerColor("Dhuhr"),
           ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 2),
         _buildPrayerItem(
           "Asr",
           prayerTime.asr,
@@ -618,7 +649,7 @@ class _PrayerList extends StatelessWidget {
           getPrayerIcon("Asr"),
           getPrayerColor("Asr"),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 2),
         _buildPrayerItem(
           "Maghrib",
           prayerTime.maghrib,
@@ -627,7 +658,7 @@ class _PrayerList extends StatelessWidget {
           getPrayerIcon("Maghrib"),
           getPrayerColor("Maghrib"),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 2),
         _buildPrayerItem(
           "Isha",
           prayerTime.isha,
@@ -657,11 +688,14 @@ class _PrayerList extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         border: isActive
             ? Border.all(color: Colors.green.shade200, width: 1.5)
-            : Border.all(color: Colors.grey.withOpacity(0.15), width: 1),
+            : Border.all(
+                color: const Color.fromARGB(255, 41, 41, 41).withOpacity(0.2),
+                width: 1,
+              ),
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: Colors.green.withOpacity(0.15),
+                  color: const Color.fromARGB(255, 14, 61, 16).withOpacity(0.2),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
                 ),
@@ -886,10 +920,10 @@ class _MelbourneClockState extends State<_MelbourneClock> {
   Widget build(BuildContext context) {
     return Text(
       _timeStr,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: Colors.black, // "Just numbers in black"
+      style: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w900,
+        color: Colors.black.withAlpha(205), // "Just numbers in black"
         letterSpacing: 0.5,
       ),
     );
