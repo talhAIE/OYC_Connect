@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../services/stripe_service.dart';
 
 class DonationPage extends ConsumerStatefulWidget {
   const DonationPage({super.key});
@@ -9,7 +10,50 @@ class DonationPage extends ConsumerStatefulWidget {
 }
 
 class _DonationPageState extends ConsumerState<DonationPage> {
-  int _selectedAmount = 50; // Default selection
+  // State for chip selection (nullable to allow deselection when typing custom amount)
+  int? _selectedChipAmount = 50;
+  late TextEditingController _customAmountController;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _customAmountController = TextEditingController();
+    _customAmountController.addListener(_onCustomAmountChanged);
+  }
+
+  @override
+  void dispose() {
+    _customAmountController.removeListener(_onCustomAmountChanged);
+    _customAmountController.dispose();
+    super.dispose();
+  }
+
+  void _onCustomAmountChanged() {
+    // If user types something, deselect chips
+    if (_customAmountController.text.isNotEmpty &&
+        _selectedChipAmount != null) {
+      setState(() {
+        _selectedChipAmount = null;
+      });
+    }
+    // Force rebuild to update button text
+    setState(() {});
+  }
+
+  void _selectChip(int amount) {
+    setState(() {
+      _selectedChipAmount = amount;
+      _customAmountController.clear(); // Clear custom field when chip selected
+    });
+  }
+
+  double get _effectiveAmount {
+    if (_customAmountController.text.isNotEmpty) {
+      return double.tryParse(_customAmountController.text) ?? 0;
+    }
+    return _selectedChipAmount?.toDouble() ?? 0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,11 +194,12 @@ class _DonationPageState extends ConsumerState<DonationPage> {
   }
 
   Widget _buildAmountChip(int amount) {
-    final isSelected = _selectedAmount == amount;
+    final isSelected = _selectedChipAmount == amount;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _selectedAmount = amount),
-        child: Container(
+        onTap: () => _selectChip(amount),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
             color: isSelected ? const Color(0xFF1B5E20) : Colors.white,
@@ -166,6 +211,9 @@ class _DonationPageState extends ConsumerState<DonationPage> {
                 offset: const Offset(0, 4),
               ),
             ],
+            border: isSelected
+                ? Border.all(color: Colors.transparent)
+                : Border.all(color: Colors.transparent),
           ),
           child: Center(
             child: Text(
@@ -195,16 +243,22 @@ class _DonationPageState extends ConsumerState<DonationPage> {
             offset: const Offset(0, 4),
           ),
         ],
+        border:
+            _selectedChipAmount == null &&
+                _customAmountController.text.isNotEmpty
+            ? Border.all(color: const Color(0xFF1B5E20), width: 2)
+            : null,
       ),
-      child: const TextField(
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(
+      child: TextField(
+        controller: _customAmountController,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: const InputDecoration(
           icon: Icon(Icons.attach_money, color: Colors.grey),
           hintText: "Custom Amount",
           border: InputBorder.none,
           hintStyle: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
         ),
-        style: TextStyle(
+        style: const TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 16,
           color: Colors.black87,
@@ -237,7 +291,7 @@ class _DonationPageState extends ConsumerState<DonationPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Apple Pay / Cards",
+                  "Apple Pay / Credit Card",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -245,7 +299,7 @@ class _DonationPageState extends ConsumerState<DonationPage> {
                   ),
                 ),
                 Text(
-                  "INSTANT & ENCRYPTED",
+                  "SECURE STRIPE PAYMENT",
                   style: TextStyle(
                     fontSize: 10,
                     color: Colors.grey,
@@ -263,31 +317,123 @@ class _DonationPageState extends ConsumerState<DonationPage> {
   }
 
   Widget _buildDonateButton() {
+    // Disable button if amount is 0 or invalid
+    final bool isEnabled = _effectiveAmount > 0;
+
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: (_isLoading || !isEnabled) ? null : _handleDonation,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFF57C00), // Orange/Gold
           foregroundColor: Colors.white,
+          disabledBackgroundColor: Colors.grey[300],
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           padding: const EdgeInsets.symmetric(vertical: 20),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.lock_outline, size: 20),
-            SizedBox(width: 8),
-            Text(
-              "Complete Donation",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-          ],
-        ),
+        child: _isLoading
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    "Processing...",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.lock_outline, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    isEnabled
+                        ? "Donate \$${_effectiveAmount.toStringAsFixed(2)}"
+                        : "Enter Amount",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
       ),
+    );
+  }
+
+  Future<void> _handleDonation() async {
+    final amount = _effectiveAmount;
+    if (amount <= 0) return;
+
+    setState(() => _isLoading = true);
+
+    // Unfocus keyboard
+    FocusScope.of(context).unfocus();
+
+    await StripeService.instance.makePayment(
+      amount: amount,
+      currency: 'AUD',
+      onResult: (success) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+
+        if (success) {
+          // Reset form on success
+          setState(() {
+            _selectedChipAmount = 50; // Reset to default
+            _customAmountController.clear();
+          });
+
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Column(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green, size: 50),
+                  SizedBox(height: 10),
+                  Text("Jazak Allah Khair!"),
+                ],
+              ),
+              content: const Text(
+                "Your donation has been received successfully. May Allah reward you abundantly.",
+                textAlign: TextAlign.center,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text(
+                    "OK",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment cancelled or failed'),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
     );
   }
 }
