@@ -19,6 +19,7 @@ import '../../features/admin/presentation/pages/manage_prayer_times_page.dart';
 import '../../features/admin/presentation/pages/manage_events_page.dart';
 import '../../features/admin/presentation/pages/manage_announcements_page.dart';
 import '../../features/admin/presentation/pages/jummah_settings_page.dart';
+import '../../features/admin/presentation/pages/donation_history_page.dart';
 
 import '../../features/prayer_times/presentation/pages/prayer_calendar_page.dart';
 import '../../features/classes/presentation/pages/classes_schedule_page.dart';
@@ -153,6 +154,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'teachers',
                         builder: (context, state) => const ManageTeachersPage(),
+                      ),
+                      GoRoute(
+                        path: 'donations',
+                        builder: (context, state) =>
+                            const DonationHistoryPage(),
                       ),
                     ],
                   ),

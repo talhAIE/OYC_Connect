@@ -79,6 +79,17 @@ class AdminDashboardPage extends ConsumerWidget {
                 context.push('/profile/admin/schedule');
               },
             ),
+            const SizedBox(height: 16),
+            _buildAdminTile(
+              context,
+              title: "Donation History",
+              subtitle: "View all member donations",
+              icon: Icons.attach_money,
+              color: Colors.green,
+              onTap: () {
+                context.push('/profile/admin/donations');
+              },
+            ),
           ],
         ),
       ),
