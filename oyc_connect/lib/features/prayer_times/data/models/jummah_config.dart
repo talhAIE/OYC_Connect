@@ -10,6 +10,7 @@ class JummahConfig with _$JummahConfig {
     @JsonKey(name: 'khutbah_time') required String khutbahTime,
     @JsonKey(name: 'jummah_time') required String jummahTime,
     required String address,
+    @JsonKey(name: 'khateeb_name') String? khateebName,
   }) = _JummahConfig;
 
   factory JummahConfig.fromJson(Map<String, dynamic> json) =>

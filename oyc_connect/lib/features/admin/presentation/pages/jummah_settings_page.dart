@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../prayer_times/data/models/jummah_config.dart';
+import '../../../prayer_times/data/models/khateeb_model.dart';
 import '../../../prayer_times/presentation/providers/prayer_times_provider.dart';
+import '../../../prayer_times/data/repositories/khateeb_repository.dart';
 
 class JummahSettingsPage extends ConsumerStatefulWidget {
   const JummahSettingsPage({super.key});
@@ -16,6 +18,7 @@ class _JummahSettingsPageState extends ConsumerState<JummahSettingsPage> {
   late TextEditingController _khutbahController;
   late TextEditingController _addressController;
   String? _docId; // To store existing ID if update
+  String? _selectedKhateebName;
 
   @override
   void initState() {
@@ -34,6 +37,7 @@ class _JummahSettingsPageState extends ConsumerState<JummahSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final configAsync = ref.watch(jummahConfigProvider);
+    final khateebsAsync = ref.watch(khateebsStreamProvider);
 
     // Listen to load initial data
     ref.listen(jummahConfigProvider, (prev, next) {
@@ -43,6 +47,7 @@ class _JummahSettingsPageState extends ConsumerState<JummahSettingsPage> {
           _docId = data.id;
           _khutbahController.text = data.khutbahTime;
           _addressController.text = data.address;
+          _selectedKhateebName = data.khateebName;
         });
       }
     });
@@ -60,6 +65,7 @@ class _JummahSettingsPageState extends ConsumerState<JummahSettingsPage> {
             _docId = config.id;
             _khutbahController.text = config.khutbahTime;
             _addressController.text = config.address;
+            _selectedKhateebName = config.khateebName;
           }
 
           return SingleChildScrollView(
@@ -81,6 +87,94 @@ class _JummahSettingsPageState extends ConsumerState<JummahSettingsPage> {
                     icon: Icons.access_time,
                   ),
                   const SizedBox(height: 16),
+
+                  // Khateeb Dropdown
+                  khateebsAsync.when(
+                    data: (khateebs) {
+                      // Ensure selected value is valid or null
+                      if (_selectedKhateebName != null &&
+                          !khateebs.any(
+                            (k) => k.name == _selectedKhateebName,
+                          )) {
+                        // Keep it if it's custom, or clear if strict?
+                        // For now, let's treat the saved string as source of truth visually,
+                        // but if we want strict selection we might need to clear or show 'Unknown'.
+                        // Let's assume we match by Name.
+                      }
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value:
+                                      khateebs.any(
+                                        (k) => k.name == _selectedKhateebName,
+                                      )
+                                      ? _selectedKhateebName
+                                      : null,
+                                  decoration: InputDecoration(
+                                    labelText: "Select Khateeb",
+                                    prefixIcon: const Icon(Icons.person),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  items: khateebs.map((k) {
+                                    return DropdownMenuItem(
+                                      value: k.name,
+                                      child: Text(k.name),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _selectedKhateebName = val;
+                                    });
+                                  },
+                                  validator: (val) => null, // Optional
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              InkWell(
+                                onTap: () {
+                                  context.push('/profile/admin/khateebs');
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.teal.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.teal.withOpacity(0.5),
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.list_alt,
+                                    color: Colors.teal,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.only(left: 4.0, top: 4.0),
+                            child: Text(
+                              "Tap the list icon to add or remove speakers",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                    loading: () => const LinearProgressIndicator(),
+                    error: (e, _) => Text("Error loading khateebs: $e"),
+                  ),
 
                   const SizedBox(height: 16),
 
@@ -138,34 +232,23 @@ class _JummahSettingsPageState extends ConsumerState<JummahSettingsPage> {
     if (!_formKey.currentState!.validate()) return;
 
     final repo = ref.read(jummahRepositoryProvider);
-    final id =
-        _docId ??
-        ""; // If empty, backend might generate one or fail depending on RLS/schema
+    final id = _docId ?? "";
 
-    // Fix: If no ID found in state, try to fetch it one last time from repo.
     if (id.isEmpty) {
       try {
         final existing = await repo.getJummahConfig();
         if (existing != null) {
-          // Found it! Use this ID.
-          // Recursive call or just proceed? Proceed clearer.
           final updatedConfig = existing.copyWith(
             khutbahTime: _khutbahController.text,
             address: _addressController.text,
-            // jummahTime kept as is
+            khateebName: _selectedKhateebName,
           );
           await _performUpdate(repo, updatedConfig);
           return;
         } else {
-          // Still nothing? This means table is empty. Insert new?
-          // Not handled here based on previous assumptions, but let's error out safely
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  "Error: No configuration found. Migration missing?",
-                ),
-              ),
+              const SnackBar(content: Text("Error: No configuration found.")),
             );
           }
           return;
@@ -176,18 +259,12 @@ class _JummahSettingsPageState extends ConsumerState<JummahSettingsPage> {
       return;
     }
 
-    // Normal update flow if we have ID
-    // We need to preserve jummahTime since we removed the field but model requires it.
-    // We can fetch current to preserve it, OR just pass empty string if we don't care.
-    // Better to fetch current to be safe if ID is known.
-    // But since we are outside the `data` block, we might rely on provider params or just fetch.
-    // Let's do a fetch-modify-save pattern to be robust.
-
     final currentConfig = await repo.getJummahConfig();
     if (currentConfig != null) {
       final updated = currentConfig.copyWith(
         khutbahTime: _khutbahController.text,
         address: _addressController.text,
+        khateebName: _selectedKhateebName,
       );
       await _performUpdate(repo, updated);
     }

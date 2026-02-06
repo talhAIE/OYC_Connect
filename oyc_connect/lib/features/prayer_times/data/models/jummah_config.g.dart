@@ -12,6 +12,7 @@ _$JummahConfigImpl _$$JummahConfigImplFromJson(Map<String, dynamic> json) =>
       khutbahTime: json['khutbah_time'] as String,
       jummahTime: json['jummah_time'] as String,
       address: json['address'] as String,
+      khateebName: json['khateeb_name'] as String?,
     );
 
 Map<String, dynamic> _$$JummahConfigImplToJson(_$JummahConfigImpl instance) =>
@@ -20,4 +21,5 @@ Map<String, dynamic> _$$JummahConfigImplToJson(_$JummahConfigImpl instance) =>
       'khutbah_time': instance.khutbahTime,
       'jummah_time': instance.jummahTime,
       'address': instance.address,
+      'khateeb_name': instance.khateebName,
     };

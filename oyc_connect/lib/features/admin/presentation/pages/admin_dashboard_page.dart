@@ -68,6 +68,7 @@ class AdminDashboardPage extends ConsumerWidget {
                 context.push('/profile/admin/jummah-settings');
               },
             ),
+
             const SizedBox(height: 16),
             _buildAdminTile(
               context,

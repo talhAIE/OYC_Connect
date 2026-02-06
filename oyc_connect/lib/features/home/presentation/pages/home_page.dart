@@ -152,7 +152,7 @@ class _PrayerContent extends StatelessWidget {
             child: _MelbourneClock(),
           ),
         ),
-        _NextPrayerCard(prayerTime: prayerTime),
+        _NextPrayerCard(prayerTime: prayerTime, jummahConfig: jummahConfig),
         const SizedBox(height: 16),
         Align(
           alignment: Alignment.centerLeft,
@@ -176,7 +176,9 @@ class _PrayerContent extends StatelessWidget {
 
 class _NextPrayerCard extends StatefulWidget {
   final PrayerTime? prayerTime;
-  const _NextPrayerCard({required this.prayerTime});
+  final JummahConfig? jummahConfig;
+
+  const _NextPrayerCard({required this.prayerTime, this.jummahConfig});
 
   @override
   State<_NextPrayerCard> createState() => _NextPrayerCardState();
@@ -221,6 +223,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
     final melbourne = tz.getLocation('Australia/Melbourne');
     final now = tz.TZDateTime.now(melbourne);
     final pt = widget.prayerTime!;
+    final isFriday = now.weekday == DateTime.friday;
 
     // Robust Parser using Regex to avoid format/locale issues
     // Matches "4:39" or "4:39 AM" or "4:39AM" etc.
@@ -261,6 +264,11 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
       "MAGHRIB": parseTime(pt.maghrib),
       "ISHA": parseTime(pt.isha),
     };
+
+    if (isFriday && widget.jummahConfig != null) {
+      // Use "JUMMAH" as key (shorter)
+      prayers["JUMMAH"] = parseTime(widget.jummahConfig!.khutbahTime);
+    }
 
     // Check if we didn't get any valid times
     if (prayers.values.every((v) => v == null)) {
@@ -406,16 +414,23 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Name
-                    Text(
-                      _nextPrayerName.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white, // Amber/Gold accent
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
+                    // Name (Flexible to avoid overflow)
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          _nextPrayerName.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white, // Amber/Gold accent
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     // Time
                     Text(
                       _nextPrayerTime,
@@ -600,10 +615,20 @@ class _PrayerList extends StatelessWidget {
       "Isha": parseTime(prayerTime.isha),
     };
 
+    if (isFriday && jummahConfig != null) {
+      prayers["Jummah"] = parseTime(jummahConfig!.khutbahTime);
+    }
+
     // Let's reuse logic: Find first prayer > now.
     String? nextName;
     final sortedKeys = prayers.keys.toList()
-      ..sort((a, b) => (prayers[a]?.compareTo(prayers[b]!) ?? 0));
+      ..sort((a, b) {
+        final tA = prayers[a];
+        final tB = prayers[b];
+        if (tA == null) return 1;
+        if (tB == null) return -1;
+        return tA.compareTo(tB);
+      });
 
     for (var key in sortedKeys) {
       final t = prayers[key];
@@ -613,9 +638,8 @@ class _PrayerList extends StatelessWidget {
       }
     }
 
-    // If nextName is null (after Isha), usually we highlight Fajr (tomorrow) or keep Isha?
-    // Let's highlight Fajr if it's tomorrow.
-    final target = nextName ?? "Fajr";
+    // Standard Next Prayer Logic is sufficient.
+    String target = nextName ?? "Fajr";
 
     return Column(
       children: [
@@ -630,7 +654,11 @@ class _PrayerList extends StatelessWidget {
         const SizedBox(height: 2),
         const SizedBox(height: 2),
         if (isFriday && jummahConfig != null)
-          _buildJummahItem(context, jummahConfig!, target == "Dhuhr")
+          _buildJummahItem(
+            context,
+            jummahConfig!,
+            target == "Dhuhr" || target == "Jummah",
+          )
         else
           _buildPrayerItem(
             "Dhuhr",
@@ -789,6 +817,7 @@ class _PrayerList extends StatelessWidget {
         );
       },
       child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
           color: Colors.white, // Light theme

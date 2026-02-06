@@ -27,6 +27,8 @@ mixin _$JummahConfig {
   @JsonKey(name: 'jummah_time')
   String get jummahTime => throw _privateConstructorUsedError;
   String get address => throw _privateConstructorUsedError;
+  @JsonKey(name: 'khateeb_name')
+  String? get khateebName => throw _privateConstructorUsedError;
 
   /// Serializes this JummahConfig to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -50,6 +52,7 @@ abstract class $JummahConfigCopyWith<$Res> {
     @JsonKey(name: 'khutbah_time') String khutbahTime,
     @JsonKey(name: 'jummah_time') String jummahTime,
     String address,
+    @JsonKey(name: 'khateeb_name') String? khateebName,
   });
 }
 
@@ -72,6 +75,7 @@ class _$JummahConfigCopyWithImpl<$Res, $Val extends JummahConfig>
     Object? khutbahTime = null,
     Object? jummahTime = null,
     Object? address = null,
+    Object? khateebName = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -91,6 +95,10 @@ class _$JummahConfigCopyWithImpl<$Res, $Val extends JummahConfig>
                 ? _value.address
                 : address // ignore: cast_nullable_to_non_nullable
                       as String,
+            khateebName: freezed == khateebName
+                ? _value.khateebName
+                : khateebName // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -111,6 +119,7 @@ abstract class _$$JummahConfigImplCopyWith<$Res>
     @JsonKey(name: 'khutbah_time') String khutbahTime,
     @JsonKey(name: 'jummah_time') String jummahTime,
     String address,
+    @JsonKey(name: 'khateeb_name') String? khateebName,
   });
 }
 
@@ -132,6 +141,7 @@ class __$$JummahConfigImplCopyWithImpl<$Res>
     Object? khutbahTime = null,
     Object? jummahTime = null,
     Object? address = null,
+    Object? khateebName = freezed,
   }) {
     return _then(
       _$JummahConfigImpl(
@@ -151,6 +161,10 @@ class __$$JummahConfigImplCopyWithImpl<$Res>
             ? _value.address
             : address // ignore: cast_nullable_to_non_nullable
                   as String,
+        khateebName: freezed == khateebName
+            ? _value.khateebName
+            : khateebName // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -164,6 +178,7 @@ class _$JummahConfigImpl implements _JummahConfig {
     @JsonKey(name: 'khutbah_time') required this.khutbahTime,
     @JsonKey(name: 'jummah_time') required this.jummahTime,
     required this.address,
+    @JsonKey(name: 'khateeb_name') this.khateebName,
   });
 
   factory _$JummahConfigImpl.fromJson(Map<String, dynamic> json) =>
@@ -179,10 +194,13 @@ class _$JummahConfigImpl implements _JummahConfig {
   final String jummahTime;
   @override
   final String address;
+  @override
+  @JsonKey(name: 'khateeb_name')
+  final String? khateebName;
 
   @override
   String toString() {
-    return 'JummahConfig(id: $id, khutbahTime: $khutbahTime, jummahTime: $jummahTime, address: $address)';
+    return 'JummahConfig(id: $id, khutbahTime: $khutbahTime, jummahTime: $jummahTime, address: $address, khateebName: $khateebName)';
   }
 
   @override
@@ -195,13 +213,21 @@ class _$JummahConfigImpl implements _JummahConfig {
                 other.khutbahTime == khutbahTime) &&
             (identical(other.jummahTime, jummahTime) ||
                 other.jummahTime == jummahTime) &&
-            (identical(other.address, address) || other.address == address));
+            (identical(other.address, address) || other.address == address) &&
+            (identical(other.khateebName, khateebName) ||
+                other.khateebName == khateebName));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, khutbahTime, jummahTime, address);
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    khutbahTime,
+    jummahTime,
+    address,
+    khateebName,
+  );
 
   /// Create a copy of JummahConfig
   /// with the given fields replaced by the non-null parameter values.
@@ -223,6 +249,7 @@ abstract class _JummahConfig implements JummahConfig {
     @JsonKey(name: 'khutbah_time') required final String khutbahTime,
     @JsonKey(name: 'jummah_time') required final String jummahTime,
     required final String address,
+    @JsonKey(name: 'khateeb_name') final String? khateebName,
   }) = _$JummahConfigImpl;
 
   factory _JummahConfig.fromJson(Map<String, dynamic> json) =
@@ -238,6 +265,9 @@ abstract class _JummahConfig implements JummahConfig {
   String get jummahTime;
   @override
   String get address;
+  @override
+  @JsonKey(name: 'khateeb_name')
+  String? get khateebName;
 
   /// Create a copy of JummahConfig
   /// with the given fields replaced by the non-null parameter values.
