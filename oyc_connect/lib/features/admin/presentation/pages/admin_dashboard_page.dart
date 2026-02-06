@@ -21,7 +21,7 @@ class AdminDashboardPage extends ConsumerWidget {
           onPressed: () => context.pop(),
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
@@ -70,6 +70,7 @@ class AdminDashboardPage extends ConsumerWidget {
             ),
 
             const SizedBox(height: 16),
+            const SizedBox(height: 16),
             _buildAdminTile(
               context,
               title: "Manage Weekly Classes",
@@ -91,6 +92,7 @@ class AdminDashboardPage extends ConsumerWidget {
                 context.push('/profile/admin/donations');
               },
             ),
+            const SizedBox(height: 100), // Padding to clear floating nav bar
           ],
         ),
       ),

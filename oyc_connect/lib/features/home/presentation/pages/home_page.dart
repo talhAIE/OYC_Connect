@@ -423,8 +423,8 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                           _nextPrayerName.toUpperCase(),
                           style: const TextStyle(
                             color: Colors.white, // Amber/Gold accent
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
                             letterSpacing: 0.5,
                           ),
                         ),
