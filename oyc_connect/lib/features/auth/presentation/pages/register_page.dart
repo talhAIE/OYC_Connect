@@ -80,10 +80,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               children: [
                 const SizedBox(height: 20),
                 Center(
-                  child: Image.asset(
-                    'assets/images/oyc_logo.jpeg',
-                    height: 120,
-                  ),
+                  child: Image.asset('assets/images/oyc_logo.png', height: 120),
                 ),
                 const SizedBox(height: 20),
                 const Text(

@@ -70,7 +70,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 children: [
                   // Logo
                   Image.asset(
-                    'assets/images/oyc_logo.jpeg',
+                    'assets/images/oyc_logo.png',
                     height: 120, // Adjust height as needed
                   ),
                   const SizedBox(height: 24),
