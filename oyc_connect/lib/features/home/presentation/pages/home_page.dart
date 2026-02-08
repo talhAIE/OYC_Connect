@@ -151,6 +151,7 @@ class _PrayerContentState extends State<_PrayerContent> {
   String _activePrayerName = ""; // For highlighting the list
   int _ntpOffset = 0;
   String _currentClockTime = "--:--:--"; // Unified clock time
+  bool _isIqamahMode = false; // New state for UI label
 
   @override
   void initState() {
@@ -286,6 +287,7 @@ class _PrayerContentState extends State<_PrayerContent> {
 
     String? determinedName;
     tz.TZDateTime? determinedTime;
+    bool isIqamah = false;
 
     // Logic: Find first prayer where Now < Limit
     for (var key in sortedKeys) {
@@ -296,7 +298,16 @@ class _PrayerContentState extends State<_PrayerContent> {
 
       if (limit != null && now.isBefore(limit)) {
         determinedName = key;
-        determinedTime = adhan;
+
+        if (adhan != null && now.isAfter(adhan)) {
+          // Adhan passed, waiting for Iqamah
+          determinedTime = limit;
+          isIqamah = true;
+        } else {
+          // Before Adhan
+          determinedTime = adhan;
+          isIqamah = false;
+        }
         break;
       }
     }
@@ -309,12 +320,13 @@ class _PrayerContentState extends State<_PrayerContent> {
         // Create tomorrow's time
         final t = data["adhan"] as tz.TZDateTime;
         determinedTime = t.add(const Duration(days: 1));
-        // Limit doesn't matter much for display calculation here
+        isIqamah = false;
       }
     }
 
     if (mounted) {
       setState(() {
+        _isIqamahMode = isIqamah;
         _nextPrayerName = determinedName ?? "NONE";
 
         // Active Prayer Name for List (Strip " (TOMORROW)" for matching)
@@ -375,6 +387,7 @@ class _PrayerContentState extends State<_PrayerContent> {
           prayerName: _nextPrayerName,
           prayerTime: _nextPrayerTime,
           countdown: _countdown,
+          isIqamah: _isIqamahMode, // Pass mode to card
         ),
         const SizedBox(height: 16),
         Align(
@@ -404,11 +417,13 @@ class _NextPrayerCard extends StatelessWidget {
   final String prayerName;
   final String prayerTime;
   final String countdown;
+  final bool isIqamah; // New param
 
   const _NextPrayerCard({
     required this.prayerName,
     required this.prayerTime,
     required this.countdown,
+    this.isIqamah = false,
   });
 
   @override
@@ -429,14 +444,29 @@ class _NextPrayerCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
         ],
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color.fromARGB(255, 1, 107, 1), // Rich Teal
-            Color.fromARGB(255, 29, 99, 1), // Darker Teal
-          ],
-        ),
+        gradient: isIqamah
+            ? const LinearGradient(
+                // Different gradient for Iqamah mode?
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.fromARGB(
+                    255,
+                    120,
+                    20,
+                    20,
+                  ), // Dark Red/Maroon for Urgency?
+                  Color.fromARGB(255, 60, 10, 10),
+                ],
+              )
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.fromARGB(255, 1, 107, 1), // Rich Teal
+                  Color.fromARGB(255, 29, 99, 1), // Darker Teal
+                ],
+              ),
       ),
       child: Stack(
         children: [
@@ -463,7 +493,7 @@ class _NextPrayerCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "NEXT PRAYER",
+                      isIqamah ? "IQAMAH" : "NEXT PRAYER", // Dynamic Label
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 13,
