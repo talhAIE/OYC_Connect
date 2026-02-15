@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:oyc_connect/features/auth/presentation/pages/login_page.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_pallete.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_button.dart';
@@ -57,10 +57,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     ref.listen<AsyncValue<void>>(authControllerProvider, (_, next) {
       next.when(
         data: (_) {
+          if (!context.mounted) return;
           showCustomSnackBar(context, 'Account created! Please log in.');
-          Navigator.pop(context); // Go back to login
+          context.go('/login');
         },
         error: (err, st) {
+          if (!context.mounted) return;
           showCustomSnackBar(context, err.toString(), isError: true);
         },
         loading: () {},
@@ -195,14 +197,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       style: TextStyle(color: Colors.black.withAlpha(165)),
                     ),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginPage(),
-                          ),
-                        );
-                      },
+                      onTap: () => context.go('/login'),
                       child: const Text(
                         'Login',
                         style: TextStyle(

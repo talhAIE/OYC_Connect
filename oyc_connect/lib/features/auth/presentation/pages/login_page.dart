@@ -5,7 +5,6 @@ import '../../../../core/theme/app_pallete.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_button.dart';
 import '../widgets/custom_field.dart';
-import 'register_page.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -46,10 +45,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     ref.listen<AsyncValue<void>>(authControllerProvider, (_, next) {
       next.when(
         data: (_) {
+          if (!context.mounted) return;
           showCustomSnackBar(context, 'Welcome back!');
-          context.go('/home');
+          // Router redirect will navigate to /home; avoid double navigation.
         },
         error: (err, st) {
+          if (!context.mounted) return;
           showCustomSnackBar(context, err.toString(), isError: true);
         },
         loading: () {},
@@ -159,14 +160,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         style: TextStyle(color: Colors.black.withAlpha(165)),
                       ),
                       GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const RegisterPage(),
-                            ),
-                          );
-                        },
+                        onTap: () => context.go('/register'),
                         child: const Text(
                           'Create Account',
                           style: TextStyle(

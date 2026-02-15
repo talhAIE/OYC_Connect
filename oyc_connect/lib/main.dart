@@ -27,7 +27,7 @@ Future<void> main() async {
   );
 
   // Initialize OneSignal
-  OneSignal.initialize("1841c7be-1c1b-4ef4-96ec-17b15b252126");
+  OneSignal.initialize("4428e176-2a7f-4d7f-9c28-4ebec13b5001");
   // Request permission
   OneSignal.Notifications.requestPermission(true);
 

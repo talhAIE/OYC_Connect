@@ -444,29 +444,14 @@ class _NextPrayerCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
         ],
-        gradient: isIqamah
-            ? const LinearGradient(
-                // Different gradient for Iqamah mode?
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color.fromARGB(
-                    255,
-                    120,
-                    20,
-                    20,
-                  ), // Dark Red/Maroon for Urgency?
-                  Color.fromARGB(255, 60, 10, 10),
-                ],
-              )
-            : const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color.fromARGB(255, 1, 107, 1), // Rich Teal
-                  Color.fromARGB(255, 29, 99, 1), // Darker Teal
-                ],
-              ),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.fromARGB(255, 1, 107, 1), // Same green as adhan time
+            Color.fromARGB(255, 29, 99, 1), // Darker Teal
+          ],
+        ),
       ),
       child: Stack(
         children: [

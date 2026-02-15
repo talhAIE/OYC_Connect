@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const ONE_SIGNAL_APP_ID = "1841c7be-1c1b-4ef4-96ec-17b15b252126";
+const ONE_SIGNAL_APP_ID = "4428e176-2a7f-4d7f-9c28-4ebec13b5001";
 // Note: In production, store this in Deno.env.get("ONESIGNAL_API_KEY")
-const ONE_SIGNAL_API_KEY = "os_v2_app_dba4ppq4dnhpjfxmc6yvwjjbezkxhogy6ivuud5q5bxhbkzopnojspymhbylfsom5vrpyciq3ogpi7seotmbx3k5uh6ki3hyzqr545i";
+const ONE_SIGNAL_API_KEY = "os_v2_app_iquoc5rkp5gx7hbij27mco2qahav72yvfclu2jexb3dw457asdftzhf4vtf5e45ozbln6ruhu5g3j6wcw6ilapalnnjk4by6x6mn4ca";
 
 serve(async (req) => {
   try {

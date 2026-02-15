@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const ONESIGNAL_APP_ID = "1841c7be-1c1b-4ef4-96ec-17b15b252126";
-const ONESIGNAL_API_KEY = "kxhogy6ivuud5q5bxhbkzopno";
+const ONESIGNAL_APP_ID = "4428e176-2a7f-4d7f-9c28-4ebec13b5001";
+const ONESIGNAL_API_KEY = "av72yvfclu2jexb3dw457asdf";
 
 Deno.serve(async (req) => {
   try {

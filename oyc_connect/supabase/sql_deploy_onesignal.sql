@@ -5,9 +5,9 @@ create extension if not exists pg_net;
 create or replace function public.send_onesignal_notification()
 returns trigger as $$
 declare
-  -- Your Credentials (I have pre-filled these for you)
-  os_app_id text := '1841c7be-1c1b-4ef4-96ec-17b15b252126';
-  os_api_key text := 'os_v2_app_dba4ppq4dnhpjfxmc6yvwjjbezkxhogy6ivuud5q5bxhbkzopnojspymhbylfsom5vrpyciq3ogpi7seotmbx3k5uh6ki3hyzqr545i';
+  -- MUST match Flutter app (main.dart) and send_onesignal_notification_manual – same OneSignal app
+  os_app_id text := '4428e176-2a7f-4d7f-9c28-4ebec13b5001';
+  os_api_key text := 'os_v2_app_iquoc5rkp5gx7hbij27mco2qahav72yvfclu2jexb3dw457asdftzhf4vtf5e45ozbln6ruhu5g3j6wcw6ilapalnnjk4by6x6mn4ca';
   
   -- Variables
   notification_title text;
@@ -20,7 +20,7 @@ begin
       notification_body := 'Check the app for details.'; -- Customize as needed
   elsif TG_NAME = 'trigger_notify_announcement' then
       notification_title := NEW.title;
-      notification_body := NEW.body;
+      notification_body := coalesce(trim(NEW.body), 'New announcement.') || ' Tap for more details.';
   else
       notification_title := 'Update';
       notification_body := 'New content available.';

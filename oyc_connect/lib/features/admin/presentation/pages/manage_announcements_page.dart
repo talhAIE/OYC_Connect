@@ -1,7 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_pallete.dart';
+import '../../../../core/constants/supabase_constants.dart';
 import '../../../../features/community/data/models/announcement_model.dart';
 import '../../../../features/community/presentation/providers/community_providers.dart';
 
@@ -34,9 +36,34 @@ class _ManageAnnouncementsPageState
     }
   }
 
-  Future<void> _handleSave(Announcement announcement) async {
+  Future<void> _handleSave(
+    Announcement announcement,
+    Uint8List? imageBytes,
+    String? imageName,
+  ) async {
     final repo = ref.read(communityRepositoryProvider);
-    await repo.upsertAnnouncement(announcement);
+    String? imageUrl = announcement.imageUrl;
+
+    if (imageBytes != null && imageName != null) {
+      final path =
+          'announcements/${DateTime.now().millisecondsSinceEpoch}_$imageName';
+      final uploadedUrl =
+          await repo.uploadAnnouncementImage(path, imageBytes);
+      if (uploadedUrl == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to upload image. Please try again.')),
+          );
+        }
+        return;
+      }
+      imageUrl = uploadedUrl;
+    } else if (imageUrl == null || imageUrl.isEmpty) {
+      imageUrl = SupabaseConstants.defaultAnnouncementImageUrl;
+    }
+
+    final finalAnnouncement = announcement.copyWith(imageUrl: imageUrl);
+    await repo.upsertAnnouncement(finalAnnouncement);
     ref.invalidate(announcementsProvider);
   }
 
@@ -84,6 +111,20 @@ class _ManageAnnouncementsPageState
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (announcement.imageUrl != null &&
+                  announcement.imageUrl!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      announcement.imageUrl!,
+                      height: 160,
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
               if (announcement.isUrgent)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -195,7 +236,11 @@ class _ManageAnnouncementsPageState
 
 class AnnouncementFormDialog extends StatefulWidget {
   final Announcement? initialAnnouncement;
-  final Future<void> Function(Announcement announcement) onSave;
+  final Future<void> Function(
+    Announcement announcement,
+    Uint8List? imageBytes,
+    String? imageName,
+  ) onSave;
 
   const AnnouncementFormDialog({
     super.key,
@@ -212,6 +257,8 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
   final _contentController = TextEditingController();
   bool _isUrgent = false;
   bool _isLoading = false;
+  Uint8List? _selectedImageBytes;
+  String? _selectedImageName;
 
   @override
   void initState() {
@@ -229,6 +276,18 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
     _titleController.dispose();
     _contentController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      final bytes = await image.readAsBytes();
+      setState(() {
+        _selectedImageBytes = bytes;
+        _selectedImageName = image.name;
+      });
+    }
   }
 
   Future<void> _save() async {
@@ -256,7 +315,11 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
             createdAt: DateTime.now(),
           );
 
-      await widget.onSave(announcement);
+      await widget.onSave(
+        announcement,
+        _selectedImageBytes,
+        _selectedImageName,
+      );
 
       if (mounted) {
         Navigator.of(context).pop();
@@ -302,9 +365,42 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
             TextField(
               controller: _contentController,
               decoration: const InputDecoration(labelText: "Description *"),
-              maxLines: 4,
+              maxLines: 6,
               enabled: !_isLoading,
             ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.image),
+              label: Text(_selectedImageName ?? "Add / Change Image"),
+              onPressed: _isLoading ? null : _pickImage,
+            ),
+            if (_selectedImageBytes != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.memory(
+                    _selectedImageBytes!,
+                    height: 120,
+                    width: double.infinity,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              )
+            else if (widget.initialAnnouncement?.imageUrl != null &&
+                widget.initialAnnouncement!.imageUrl!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    widget.initialAnnouncement!.imageUrl!,
+                    height: 120,
+                    width: double.infinity,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
             const SizedBox(height: 20),
             SwitchListTile(
               title: const Text("Mark as Urgent"),

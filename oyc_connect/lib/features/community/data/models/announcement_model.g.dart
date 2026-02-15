@@ -13,6 +13,7 @@ _$AnnouncementImpl _$$AnnouncementImplFromJson(Map<String, dynamic> json) =>
       content: json['body'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
       isUrgent: json['is_urgent'] as bool? ?? false,
+      imageUrl: json['image_url'] as String?,
     );
 
 Map<String, dynamic> _$$AnnouncementImplToJson(_$AnnouncementImpl instance) =>
@@ -22,4 +23,5 @@ Map<String, dynamic> _$$AnnouncementImplToJson(_$AnnouncementImpl instance) =>
       'body': instance.content,
       'created_at': instance.createdAt.toIso8601String(),
       'is_urgent': instance.isUrgent,
+      'image_url': instance.imageUrl,
     };
