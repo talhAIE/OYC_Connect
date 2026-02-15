@@ -53,5 +53,18 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>oycconnect</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>reset-password</string>
+		</dict>
+	</array>
 </dict>
 </plist>

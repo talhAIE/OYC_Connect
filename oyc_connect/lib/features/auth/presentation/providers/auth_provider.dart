@@ -3,6 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import '../../data/auth_repository.dart';
 
+/// Set to true when user opens app via password-reset deep link so redirect sends them to set-new-password.
+final recoveryPendingProvider = StateProvider<bool>((ref) => false);
+
 // Dependency Injection for Supabase Client
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
   return Supabase.instance.client;
@@ -68,6 +71,27 @@ class AuthController extends Notifier<AsyncValue<void>> {
   Future<void> signOut() async {
     await _authRepository.signOut();
     OneSignal.logout();
+  }
+
+  Future<void> requestPasswordReset(String email) async {
+    state = const AsyncValue.loading();
+    try {
+      await _authRepository.resetPasswordForEmail(email);
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> setNewPassword(String newPassword) async {
+    state = const AsyncValue.loading();
+    try {
+      await _authRepository.updatePassword(newPassword);
+      await signOut();
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
   }
 }
 

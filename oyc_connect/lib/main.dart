@@ -6,6 +6,7 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'core/constants/supabase_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/router.dart';
+import 'features/auth/presentation/widgets/app_link_handler.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -31,7 +32,9 @@ Future<void> main() async {
   // Request permission
   OneSignal.Notifications.requestPermission(true);
 
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(const ProviderScope(
+    child: AppLinkHandler(child: MyApp()),
+  ));
 }
 
 class MyApp extends ConsumerWidget {

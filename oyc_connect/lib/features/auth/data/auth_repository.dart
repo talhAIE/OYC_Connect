@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import '../../../core/constants/supabase_constants.dart';
 
 class AuthRepository {
   final SupabaseClient _supabase;
@@ -57,14 +58,44 @@ class AuthRepository {
     }
   }
 
-  String _handleAuthError(AuthException e) {
-    if (e.message.contains('Invalid login credentials')) {
-      return 'Incorrect email or password.';
-    } else if (e.message.contains('User already registered')) {
-      return 'Email is already in use.';
-    } else {
-      return e.message; // Return Supabase message for other cases
+  /// Sends a password-reset email. User must click the link (redirectTo) to set a new password.
+  /// Uses a web URL if set (SupabaseConstants.passwordResetRedirectUrl) so the link opens a page that then opens the app.
+  Future<void> resetPasswordForEmail(String email) async {
+    try {
+      await _supabase.auth.resetPasswordForEmail(
+        email,
+        redirectTo: SupabaseConstants.effectivePasswordResetRedirect,
+      );
+    } on AuthException catch (e) {
+      throw _handleAuthError(e);
+    } catch (e) {
+      throw Exception('Could not send reset email. Please try again.');
     }
+  }
+
+  /// Call after user opens the app via the reset link. Establishes session so updateUser can be used.
+  Future<void> recoverSessionFromUrl(Uri uri) async {
+    await _supabase.auth.getSessionFromUrl(uri);
+  }
+
+  /// Updates the current user's password (e.g. after recovery). Call recoverSessionFromUrl first.
+  Future<void> updatePassword(String newPassword) async {
+    await _supabase.auth.updateUser(UserAttributes(password: newPassword));
+  }
+
+  String _handleAuthError(AuthException e) {
+    final msg = e.message.toLowerCase();
+    if (msg.contains('invalid login credentials')) {
+      return 'Incorrect email or password.';
+    }
+    // Supabase can return different phrases for duplicate email
+    if (msg.contains('user already registered') ||
+        msg.contains('already been registered') ||
+        msg.contains('email already in use') ||
+        msg.contains('already exists')) {
+      return 'An account with this email already exists. Please log in or use Forgot password.';
+    }
+    return e.message;
   }
 
   // Sign Out

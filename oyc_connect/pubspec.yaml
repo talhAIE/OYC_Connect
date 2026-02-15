@@ -50,6 +50,7 @@ dependencies:
   onesignal_flutter: ^5.3.5
   flutter_stripe: ^11.5.0
   flutter_dotenv: ^6.0.0
+  app_links: ^6.3.2
 
 dev_dependencies:
   flutter_test:

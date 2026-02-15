@@ -9,4 +9,15 @@ class SupabaseConstants {
 
   /// Default announcement image when none is uploaded (same as event default).
   static String get defaultAnnouncementImageUrl => defaultEventImageUrl;
+
+  /// Redirect URL for password-reset email. User clicks link → this URL (with token in hash) → page redirects to app.
+  /// Use a hosted copy of web/reset-password.html so the link opens in browser first, then opens the app.
+  /// Example: 'https://yoursite.com/reset-password.html'. If null or empty, uses app deep link (may show blank in browser).
+  static const String? passwordResetRedirectUrl = null;
+
+  /// URL used when calling resetPasswordForEmail. Prefer web page so email link doesn't open a blank browser tab.
+  static String get effectivePasswordResetRedirect =>
+      (passwordResetRedirectUrl != null && passwordResetRedirectUrl!.isNotEmpty)
+          ? passwordResetRedirectUrl!
+          : 'oycconnect://reset-password';
 }
