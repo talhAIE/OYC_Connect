@@ -10,7 +10,7 @@ OYC Connect supports **forgot password** via email. The user requests a reset li
 
 If the reset link opens in a **browser** (e.g. Gmail opening the link in Chrome, or clicking on a PC), the link points to the app’s URL scheme (`oycconnect://...`). Browsers can’t open that, so you get a **blank or “Untitled” page**.
 
-**Fix:** Use a **web fallback page** so the link opens a real webpage first. That page then redirects to the app on phones where the app is installed, and shows instructions otherwise. Steps are below.
+**Fix:** Use the **web reset page** so the link opens a real webpage. The user can then set a new password directly in the browser. Steps are below.
 
 ---
 
@@ -20,17 +20,16 @@ If the reset link opens in a **browser** (e.g. Gmail opening the link in Chrome,
 2. Go to **Authentication** → **URL Configuration**.
 3. Under **Redirect URLs**, add **both**:
    - `oycconnect://reset-password` (so the app can open when the web page redirects)
-   - Your **web fallback URL** (e.g. `https://yoursite.com/reset-password.html`) – see next section.
+   - Your **web reset page URL** (e.g. `https://yoursite.com/reset-password.html`) – see next section.
 4. Save.
 
 ---
 
-## 2. Web fallback page (stops the blank page)
+## 2. Web reset page (reset password in the browser)
 
-A fallback page is in the project: **`web/reset-password.html`**.
+A reset page is in the project: **`web/reset-password.html`**.
 
-**What it does:** When the user clicks the reset link, Supabase sends them to this page (with the token in the URL). The page then tries to open the app (`oycconnect://reset-password#...`). On a phone with the app installed, the app opens. If not, the page shows: *“Open in app”* and instructions.
-
+**What it does:** When the user clicks the reset link in the email, Supabase sends them to this page (with the token in the URL). The page recovers the session and shows a **form to set a new password** (new password + confirm). The user submits the form; the page updates the password via Supabase and shows success. They can then open the OYC Connect app and log in with the new password. Everything happens on the web page—no app redirect. *“Open in app”*
 **Setup:**
 
 1. **Host the page** somewhere HTTPS, for example:
@@ -45,11 +44,37 @@ A fallback page is in the project: **`web/reset-password.html`**.
    ```
    (Use your real URL. If you leave it `null`, the app keeps using `oycconnect://` and the email link can still open a blank page in the browser.)
 
-4. **Test:** Request a reset from the app, then click the link in the email. You should see the web page (and on a phone with the app, the app should open).
+4. **Supabase URL and key:** The page uses your Supabase project URL and anon key (same as in the app). They are set in the `<script>` at the top of `web/reset-password.html` (`SUPABASE_URL` and `SUPABASE_ANON_KEY`). If you use a different project, replace them there.
+
+5. **Test:** Request a reset from the app, then click the link in the email. You should see the web page, enter a new password, and get a success message. Then log in to the app with the new password.
 
 ---
 
-## 3. Email Templates (optional)
+## 3. Only registered emails get a reset link
+
+The app and web page call the **request-password-reset** Edge Function instead of Supabase Auth directly. The function checks that the email exists in `auth.users` before sending the reset email.
+
+- **If the email is not registered:** The user sees *"No account found with this email. Please sign up first."* (app) or the same message on the web page. No email is sent.
+- **If the email is registered:** The reset email is sent as usual.
+
+**Setup:**
+
+1. Run the migration that creates the RPC used by the Edge Function:
+   - `supabase/migrations/20250215000000_add_check_user_exists_for_reset.sql`  
+   (Apply via Supabase Dashboard → SQL Editor, or `supabase db push`.)
+
+2. Deploy the Edge Function:
+   - `supabase functions deploy request-password-reset`
+
+3. Add the **anon key** as a secret for the Edge Function (Dashboard → Edge Functions → request-password-reset → Secrets):
+   - Name: **`SUPABASE_ANON_KEY`**  
+   - Value: your project’s anon (public) key (same as in the app).
+
+See `supabase/functions/request-password-reset/README.md` for details.
+
+---
+
+## 4. Email Templates (optional)
 
 To customize the reset email text:
 
@@ -59,7 +84,7 @@ To customize the reset email text:
 
 ---
 
-## 4. App Flow
+## 5. App Flow
 
 1. **Forgot password**  
    User taps “Forgot Password?” on the login screen → **Forgot Password** page → enters email → taps “Send Reset Link”.  
@@ -79,7 +104,7 @@ To customize the reset email text:
 
 ---
 
-## 5. Duplicate Email (Registration)
+## 6. Duplicate Email (Registration)
 
 Supabase Auth allows only one account per email. If someone tries to register with an email that already exists:
 
@@ -90,7 +115,7 @@ No extra backend setup is required; the app uses Supabase’s built-in uniquenes
 
 ---
 
-## 6. Platform Deep Link Setup
+## 7. Platform Deep Link Setup
 
 - **Android:** `android/app/src/main/AndroidManifest.xml` – intent-filter with `oycconnect` scheme and `reset-password` host.
 - **iOS:** `ios/Runner/Info.plist` – `CFBundleURLTypes` with scheme `oycconnect`.
@@ -99,7 +124,7 @@ Already configured in this project.
 
 ---
 
-## 7. Testing
+## 8. Testing
 
 1. Run the app and go to **Login** → **Forgot Password**.
 2. Enter a **real email** that exists in your Supabase Auth users.

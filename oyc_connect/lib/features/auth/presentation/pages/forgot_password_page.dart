@@ -46,7 +46,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         },
         error: (err, _) {
           if (!context.mounted) return;
-          showCustomSnackBar(context, err.toString(), isError: true);
+          final msg = err.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+          showCustomSnackBar(context, msg, isError: true);
         },
         loading: () {},
       );

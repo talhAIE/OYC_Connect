@@ -58,17 +58,33 @@ class AuthRepository {
     }
   }
 
-  /// Sends a password-reset email. User must click the link (redirectTo) to set a new password.
-  /// Uses a web URL if set (SupabaseConstants.passwordResetRedirectUrl) so the link opens a page that then opens the app.
+  /// Sends a password-reset email only if the email is registered. Uses Edge Function to check first.
   Future<void> resetPasswordForEmail(String email) async {
     try {
-      await _supabase.auth.resetPasswordForEmail(
-        email,
-        redirectTo: SupabaseConstants.effectivePasswordResetRedirect,
+      final response = await _supabase.functions.invoke(
+        'request-password-reset',
+        body: {
+          'email': email.trim(),
+          'redirectTo': SupabaseConstants.effectivePasswordResetRedirect,
+        },
       );
+
+      if (response.status != 200) {
+        final msg = response.data is Map
+            ? (response.data['error'] as String? ?? 'Could not send reset email.')
+            : 'Could not send reset email.';
+        throw Exception(msg);
+      }
+    } on FunctionException catch (e) {
+      // Edge Function returned 4xx/5xx; show the message from the response body
+      final msg = e.details is Map
+          ? (e.details['error'] as String? ?? e.reasonPhrase ?? 'Could not send reset email.')
+          : (e.reasonPhrase ?? 'Could not send reset email.');
+      throw Exception(msg);
     } on AuthException catch (e) {
       throw _handleAuthError(e);
     } catch (e) {
+      if (e is Exception) rethrow;
       throw Exception('Could not send reset email. Please try again.');
     }
   }
