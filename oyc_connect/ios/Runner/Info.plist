@@ -49,6 +49,8 @@
 	<string>We need access to your photo library to allow you to upload images for events and profile.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>We need access to your camera to allow you to take photos for events and profile.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app requires location access to accurately determine your timezone for prayer times and local event notifications.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
@@ -66,5 +68,7 @@
 			<string>reset-password</string>
 		</dict>
 	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

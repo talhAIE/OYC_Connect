@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../features/profile/presentation/providers/profile_provider.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
@@ -44,7 +44,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
       final path = state.uri.path;
-      final isAuthRoute = path == '/login' ||
+      final isAuthRoute =
+          path == '/login' ||
           path == '/register' ||
           path == '/forgot-password' ||
           path == '/set-new-password';
@@ -146,6 +147,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'admin',
                     builder: (context, state) => const AdminDashboardPage(),
+                    redirect: (context, state) {
+                      // Guard: only allow admin users
+                      try {
+                        final container = ProviderScope.containerOf(context);
+                        final profile = container
+                            .read(profileProvider)
+                            .valueOrNull;
+                        if (profile == null || profile.role != 'admin') {
+                          return '/home';
+                        }
+                      } catch (_) {
+                        return '/home';
+                      }
+                      return null;
+                    },
                     routes: [
                       GoRoute(
                         path: 'prayer-times',

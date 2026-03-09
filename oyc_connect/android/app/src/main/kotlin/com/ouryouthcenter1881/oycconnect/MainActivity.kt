@@ -1,4 +1,4 @@
-package com.example.oyc_connect
+package com.ouryouthcenter1881.oycconnect
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

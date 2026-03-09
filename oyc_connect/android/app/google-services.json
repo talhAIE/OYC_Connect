@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "497994366848",
-    "project_id": "oyc-connect-da039",
-    "storage_bucket": "oyc-connect-da039.firebasestorage.app"
+    "project_number": "485847732190",
+    "project_id": "oycconnect",
+    "storage_bucket": "oycconnect.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:497994366848:android:7955915fdd94e09ccccb65",
+        "mobilesdk_app_id": "1:485847732190:android:14f1473d0b5f129c5ed74f",
         "android_client_info": {
-          "package_name": "com.example.oyc_connect"
+          "package_name": "com.ouryouthcenter1881.oycconnect"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB0rwkDq3ltpp3L8s2AqgvqRwZ-d90ZGdA"
+          "current_key": "AIzaSyBDevN-FWhrsB9m1X8OER0JwV97UuU6cBM"
         }
       ],
       "services": {

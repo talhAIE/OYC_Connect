@@ -333,6 +333,28 @@ class _DonationPageState extends ConsumerState<DonationPage> {
     final amount = _effectiveAmount;
     if (amount <= 0) return;
 
+    // Validate amount bounds
+    if (amount < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Minimum donation is \$1.00'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    if (amount > 10000) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Maximum donation is \$10,000.00'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     // Unfocus keyboard

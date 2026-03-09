@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/prayer_time_model.dart';
 
@@ -6,7 +7,11 @@ class PrayerTimesRepository {
 
   PrayerTimesRepository(this._client);
 
-  /// Fetches prayer times for a specific date (defaults to today)
+  /// Fetches prayer times for a specific date (defaults to today).
+  ///
+  /// In production we do **not** silently swallow errors – any Supabase
+  /// failure is logged and rethrown so the caller can show a proper error UI
+  /// instead of pretending there are simply no prayer times.
   Future<PrayerTime?> getPrayerTimes(DateTime date) async {
     try {
       final dateStr = date.toIso8601String().split('T')[0];
@@ -18,14 +23,18 @@ class PrayerTimesRepository {
 
       if (response == null) return null;
       return PrayerTime.fromJson(response);
-    } catch (e) {
-      // TODO: Handle error properly
-      print('Error fetching prayer times: $e');
-      return null;
+    } catch (e, st) {
+      debugPrint('Error fetching prayer times: $e\n$st');
+      // Let Riverpod / UI surface this as an error state instead of
+      // quietly returning null.
+      rethrow;
     }
   }
 
-  /// Fetches prayer times for a specific month
+  /// Fetches prayer times for a specific month.
+  ///
+  /// Same policy as [getPrayerTimes]: failures are logged and rethrown so
+  /// the UI can distinguish "no data" from "backend error".
   Future<List<PrayerTime>> getMonthlyPrayerTimes(int year, int month) async {
     try {
       final startDate = DateTime(year, month, 1);
@@ -34,7 +43,9 @@ class PrayerTimesRepository {
       final startDateStr = startDate.toIso8601String().split('T')[0];
       final endDateStr = endDate.toIso8601String().split('T')[0];
 
-      print('Fetching monthly prayer times from $startDateStr to $endDateStr');
+      debugPrint(
+        'Fetching monthly prayer times from $startDateStr to $endDateStr',
+      );
 
       final response = await _client
           .from('prayer_times')
@@ -46,9 +57,9 @@ class PrayerTimesRepository {
       return (response as List)
           .map((json) => PrayerTime.fromJson(json))
           .toList();
-    } catch (e) {
-      print('Error fetching monthly prayer times: $e');
-      return [];
+    } catch (e, st) {
+      debugPrint('Error fetching monthly prayer times: $e\n$st');
+      rethrow;
     }
   }
 

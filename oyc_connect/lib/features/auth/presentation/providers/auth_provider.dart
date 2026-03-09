@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import '../../data/auth_repository.dart';
 
 /// Set to true when user opens app via password-reset deep link so redirect sends them to set-new-password.
@@ -55,13 +54,8 @@ class AuthController extends Notifier<AsyncValue<void>> {
   Future<void> signIn({required String email, required String password}) async {
     state = const AsyncValue.loading();
     try {
-      final response = await _authRepository.signIn(
-        email: email,
-        password: password,
-      );
-      if (response.user != null) {
-        OneSignal.login(response.user!.id);
-      }
+      await _authRepository.signIn(email: email, password: password);
+      // OneSignal login is handled in auth_repository
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -69,8 +63,8 @@ class AuthController extends Notifier<AsyncValue<void>> {
   }
 
   Future<void> signOut() async {
+    // OneSignal logout is handled in auth_repository
     await _authRepository.signOut();
-    OneSignal.logout();
   }
 
   Future<void> requestPasswordReset(String email) async {

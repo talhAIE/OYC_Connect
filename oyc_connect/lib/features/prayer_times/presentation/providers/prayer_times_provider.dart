@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/prayer_times_repository.dart';
@@ -35,7 +36,7 @@ Stream<PrayerTime?> todayPrayerTime(TodayPrayerTimeRef ref) async* {
       yield fallbackData;
     }
   } catch (e) {
-    print('Initial fetch failed: $e');
+    debugPrint('Initial fetch failed: $e');
   }
 
   // 2. Subscribe to Realtime updates with error handling
@@ -52,14 +53,14 @@ Stream<PrayerTime?> todayPrayerTime(TodayPrayerTimeRef ref) async* {
         .handleError((error) {
           // If Realtime fails (e.g. Token Expired), we log it but do NOT crash the UI.
           // The previous yield (from REST or previous stream event) remains active.
-          print(
+          debugPrint(
             'Realtime subscription error (ignoring to prevent UI crash): $error',
           );
         });
 
     yield* stream;
   } catch (e) {
-    print('Stream setup failed: $e');
+    debugPrint('Stream setup failed: $e');
   }
 }
 
@@ -78,13 +79,13 @@ Stream<JummahConfig?> jummahConfig(JummahConfigRef ref) async* {
     final initial = await repository.getJummahConfig();
     if (initial != null) yield initial;
   } catch (e) {
-    print('Initial Jummah fetch failed: $e');
+    debugPrint('Initial Jummah fetch failed: $e');
   }
 
   // 2. Realtime subscription
   try {
     yield* repository.subscribeToJummahConfig();
   } catch (e) {
-    print('Jummah subscription failed: $e');
+    debugPrint('Jummah subscription failed: $e');
   }
 }

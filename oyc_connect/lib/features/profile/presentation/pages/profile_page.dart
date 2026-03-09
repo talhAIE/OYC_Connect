@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/profile_provider.dart';
-import '../../../auth/data/auth_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class ProfilePage extends ConsumerWidget {
@@ -395,7 +394,7 @@ class ProfilePage extends ConsumerWidget {
       width: double.infinity,
       child: TextButton(
         onPressed: () {
-          ref.read(authRepositoryProvider).signOut();
+          ref.read(authControllerProvider.notifier).signOut();
           // AuthWrapper will handle navigation
         },
         style: TextButton.styleFrom(

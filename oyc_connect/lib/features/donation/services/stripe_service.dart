@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 class StripeService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -14,12 +16,18 @@ class StripeService {
   }) async {
     try {
       // 1. Create Payment Intent via Supabase Edge Function
-      final paymentIntentData = await _createPaymentIntent(amount, currency);
-      final clientSecret = paymentIntentData['clientSecret'];
+      final response = await _supabase.functions.invoke(
+        'stripe-payment-intent',
+        body: {'amount': amount, 'currency': currency},
+      );
 
-      if (clientSecret == null) {
-        throw Exception("Failed to get client secret");
+      final data = response.data;
+      if (data == null || data['clientSecret'] == null) {
+        final errorMsg = data?['error'] ?? 'Failed to create payment intent';
+        throw Exception(errorMsg);
       }
+
+      final clientSecret = data['clientSecret'];
 
       // 2. Initialize Payment Sheet
       await Stripe.instance.initPaymentSheet(
@@ -32,64 +40,44 @@ class StripeService {
       // 3. Present Payment Sheet
       await Stripe.instance.presentPaymentSheet();
 
-      // 4. Save Payment to Database
-      await _savePaymentToSupabase(amount, currency, clientSecret);
-
-      onResult(true); // Success
-    } on StripeException catch (e) {
+      // 4. Payment sheet completed successfully — save to DB
+      await _savePaymentToSupabase(amount, currency, 'succeeded');
+      onResult(true);
+    } on StripeException catch (e, st) {
       if (e.error.code == FailureCode.Canceled) {
-        // User canceled, ensure UI stops loading
-        print("Payment canceled");
+        debugPrint("Payment canceled by user");
         onResult(false);
       } else {
-        print("Stripe Error: $e");
+        debugPrint("Stripe Error: ${e.error.localizedMessage}");
+        await Sentry.captureException(e, stackTrace: st);
         onResult(false);
       }
-    } catch (e) {
-      print("Error: $e");
+    } catch (e, st) {
+      debugPrint("Payment Error: $e");
+      await Sentry.captureException(e, stackTrace: st);
       onResult(false);
-    }
-  }
-
-  Future<Map<String, dynamic>> _createPaymentIntent(
-    double amount,
-    String currency,
-  ) async {
-    try {
-      final response = await _supabase.functions.invoke(
-        'stripe-payment-intent',
-        body: {'amount': amount, 'currency': currency},
-      );
-
-      return response.data;
-    } catch (e) {
-      throw Exception('Failed to create payment intent: $e');
     }
   }
 
   Future<void> _savePaymentToSupabase(
     double amount,
     String currency,
-    String paymentIntentId,
+    String status,
   ) async {
+    final userId = _supabase.auth.currentUser?.id;
+
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
-
-      // Extract payment intent ID properly if possible, but clientSecret is usually pi_..._secret_...
-      // The true ID is the first part before _secret
-      final intentId = paymentIntentId.split('_secret')[0];
-
       await _supabase.from('payments').insert({
         'user_id': userId,
         'amount': amount,
         'currency': currency,
-        'status':
-            'succeeded', // We assume success if presentPaymentSheet didn't throw
-        'payment_intent_id': intentId,
+        'status': status,
+        'created_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      print("Error saving payment: $e");
+      debugPrint("Error saving payment to database: $e");
+      // Re-throw so the caller knows the save failed
+      rethrow;
     }
   }
 }

@@ -8,7 +8,7 @@
 PRODUCT_NAME = oyc_connect
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.oycConnect
+PRODUCT_BUNDLE_IDENTIFIER = com.ouryouthcenter1881.oycconnect
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
