@@ -1,6 +1,5 @@
 # oyc_connect
-
-A new Flutter project.
+app for our youth center
 
 ## Getting Started
 
