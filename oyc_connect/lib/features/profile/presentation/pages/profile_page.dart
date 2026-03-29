@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/profile_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -117,6 +118,8 @@ class ProfilePage extends ConsumerWidget {
 
               const SizedBox(height: 30),
               _buildSignOutButton(ref, context),
+              const SizedBox(height: 16),
+              _buildDeleteAccountButton(ref, context),
             ],
           ),
         ),
@@ -413,6 +416,74 @@ class ProfilePage extends ConsumerWidget {
             fontSize: 16,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDeleteAccountButton(WidgetRef ref, BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: TextButton(
+        onPressed: () => _showDeleteConfirmation(context, ref),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+        ),
+        child: const Text(
+          "Delete Account",
+          style: TextStyle(
+            color: Colors.redAccent,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            decoration: TextDecoration.underline,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Permanently Delete Account"),
+        content: const Text(
+            "Are you absolutely sure you want to permanently delete your account? This action cannot be undone and all your data, profile information, and history will be permanently erased. Administrator privileges will also be revoked."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx); // close dialog
+              
+              // Show loading spinner
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const Center(child: CircularProgressIndicator()),
+              );
+              
+              try {
+                // Call secure database function to delete from Supabase Auth
+                await Supabase.instance.client.rpc('delete_user');
+                
+                if (context.mounted) {
+                  Navigator.pop(context); // close loading
+                  ref.read(authControllerProvider.notifier).signOut();
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  Navigator.pop(context); // close loading
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Failed to delete account. Please try again.")),
+                  );
+                }
+              }
+            },
+            child: const Text("Delete Forever", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
