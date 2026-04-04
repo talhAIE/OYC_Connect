@@ -8,8 +8,11 @@ language plpgsql
 security definer
 as $$
 begin
-  -- This securely deletes the user executing the function from the Supabase auth.users table.
-  -- Supabase will automatically log them out and cascade delete their public profile if foreign keys are setup.
+  -- Manually cascade delete dependent data first to guarantee no Foreign Key violations!
+  delete from public.payments where user_id = auth.uid();
+  delete from public.profiles where id = auth.uid();
+  
+  -- Finally delete the core authentication record
   delete from auth.users where id = auth.uid();
 end;
 $$;

@@ -461,6 +461,7 @@ class ProfilePage extends ConsumerWidget {
               showDialog(
                 context: context,
                 barrierDismissible: false,
+                useRootNavigator: true,
                 builder: (_) => const Center(child: CircularProgressIndicator()),
               );
               
@@ -469,12 +470,13 @@ class ProfilePage extends ConsumerWidget {
                 await Supabase.instance.client.rpc('delete_user');
                 
                 if (context.mounted) {
-                  Navigator.pop(context); // close loading
+                  Navigator.of(context, rootNavigator: true).pop(); // close loading
                   ref.read(authControllerProvider.notifier).signOut();
                 }
               } catch (e) {
+                debugPrint('DELETE ACCOUNT ERROR: $e');
                 if (context.mounted) {
-                  Navigator.pop(context); // close loading
+                  Navigator.of(context, rootNavigator: true).pop(); // close loading
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Failed to delete account. Please try again.")),
                   );

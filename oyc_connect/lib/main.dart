@@ -33,6 +33,7 @@ Future<void> main() async {
     appRunner: () async {
       // Stripe
       Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
+      Stripe.merchantIdentifier = 'merchant.com.ouryouthcenter1881.oycconnect';
 
       // Supabase
       await Supabase.initialize(

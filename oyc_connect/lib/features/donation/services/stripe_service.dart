@@ -34,6 +34,13 @@ class StripeService {
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: clientSecret,
           merchantDisplayName: 'OYC Connect',
+          applePay: const PaymentSheetApplePay(
+            merchantCountryCode: 'AU',
+          ),
+          googlePay: const PaymentSheetGooglePay(
+            merchantCountryCode: 'AU',
+            testEnv: false, // Set to false for Production
+          ),
         ),
       );
 
