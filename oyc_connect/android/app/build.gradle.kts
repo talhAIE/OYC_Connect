@@ -77,3 +77,8 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Required for Theme.MaterialComponents.* in styles.xml (was previously pulled in via Stripe).
+    implementation("com.google.android.material:material:1.12.0")
+}

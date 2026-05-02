@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -31,10 +30,6 @@ Future<void> main() async {
       options.tracesSampleRate = 1.0;
     },
     appRunner: () async {
-      // Stripe
-      Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
-      Stripe.merchantIdentifier = 'merchant.com.ouryouthcenter1881.oycconnect';
-
       // Supabase
       await Supabase.initialize(
         url: SupabaseConstants.url,

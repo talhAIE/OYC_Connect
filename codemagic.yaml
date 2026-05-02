@@ -1,0 +1,85 @@
+# Codemagic CI/CD — OYC Connect (Flutter iOS → App Store Connect)
+#
+# Before first build:
+# 1. Team settings → Integrations → add App Store Connect API key (name must match below).
+# 2. Team settings → codemagic.yaml → Code signing: upload/fetch App Store profile for
+#    bundle id com.ouryouthcenter1881.oycconnect OR use automatic signing per Codemagic docs.
+# 3. Replace APP_STORE_APPLE_ID with your numeric App ID from App Store Connect
+#    (App → General → App Information → Apple ID).
+# 4. Environment variable group "oyc_ios_secrets": ONESIGNAL_APP_ID (required), SENTRY_DSN (optional).
+#    Add SUPABASE_URL / SUPABASE_ANON_KEY to that group (or embed in assets/.env) if builds need them.
+
+workflows:
+  ios-appstore:
+    name: OYC Connect iOS (App Store)
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    working_directory: oyc_connect
+
+    integrations:
+      # Use the same name you give the key in Codemagic → Teams → Integrations → App Store Connect
+      app_store_connect: oyc_asc_api
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.ouryouthcenter1881.oycconnect
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      groups:
+        - oyc_ios_secrets
+      vars:
+        # Replace with your app’s numeric Apple ID from App Store Connect
+        APP_STORE_APPLE_ID: "0000000000"
+
+    scripts:
+      - name: Create assets/.env from Codemagic secrets
+        script: |
+          set -e
+          mkdir -p assets
+          : "${ONESIGNAL_APP_ID:?Set ONESIGNAL_APP_ID in group oyc_ios_secrets}"
+          cat > assets/.env << EOF
+          ONESIGNAL_APP_ID=$ONESIGNAL_APP_ID
+          SENTRY_DSN=${SENTRY_DSN:-}
+          EOF
+
+      - name: Set up code signing on Xcode project
+        script: xcode-project use-profiles
+
+      - name: Get Flutter packages
+        script: flutter pub get
+
+      - name: Install CocoaPods
+        script: |
+          cd ios && pod install
+
+      - name: Flutter build IPA
+        script: |
+          set -e
+          LATEST=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" || echo 0)
+          BUILD_NUMBER=$((LATEST + 1))
+          # Version name (e.g. 1.0.1) comes from pubspec.yaml; bump it there for a new App Store version.
+          flutter build ipa --release \
+            --build-number="$BUILD_NUMBER" \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          - your-email@example.com # change me
+        notify:
+          success: true
+          failure: true
+
+      app_store_connect:
+        auth: integration
+        # Start with TestFlight only; set submit_to_app_store when you are ready for review automation
+        submit_to_testflight: true
+        # submit_to_app_store: false
+        # beta_groups:
+        #   - Internal Testers

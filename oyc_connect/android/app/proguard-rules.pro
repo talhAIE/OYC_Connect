@@ -6,9 +6,6 @@
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
 
-# Stripe
--dontwarn com.stripe.android.**
--keep class com.stripe.android.** { *; }
 
 # Supabase / GoTrue / Realtime
 -keep class io.supabase.** { *; }
