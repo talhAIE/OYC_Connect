@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/jummah_config.dart';
 
@@ -7,7 +8,10 @@ class JummahRepository {
   JummahRepository(this._client);
 
   /// Fetches the Jummah configuration.
-  /// Since we only have one row, we fetch the first one.
+  ///
+  /// For production, we log and rethrow failures so the caller can display
+  /// an explicit error state rather than silently behaving as if no config
+  /// exists.
   Future<JummahConfig?> getJummahConfig() async {
     try {
       final response = await _client
@@ -18,10 +22,9 @@ class JummahRepository {
 
       if (response == null) return null;
       return JummahConfig.fromJson(response);
-    } catch (e) {
-      // TODO: Handle error properly
-      print('Error fetching jummah config: $e');
-      return null;
+    } catch (e, st) {
+      debugPrint('Error fetching jummah config: $e\n$st');
+      rethrow;
     }
   }
 

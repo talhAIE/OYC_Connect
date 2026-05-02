@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../features/auth/data/auth_repository.dart';
+import '../../features/profile/presentation/providers/profile_provider.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/auth/presentation/pages/forgot_password_page.dart';
+import '../../features/auth/presentation/pages/set_new_password_page.dart';
 import '../../features/auth/presentation/widgets/auth_wrapper.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/community/presentation/pages/community_page.dart';
@@ -41,17 +43,29 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: GoRouterRefreshStream(authRepository.authStateChanges),
     redirect: (context, state) {
       final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
-      final isLoggingIn = state.uri.path == '/login';
-      final isRegistering = state.uri.path == '/register';
+      final path = state.uri.path;
+      final isAuthRoute =
+          path == '/login' ||
+          path == '/register' ||
+          path == '/forgot-password' ||
+          path == '/set-new-password';
 
-      // If not logged in and not navigating to login/register, redirect to login
-      if (!isLoggedIn && !isLoggingIn && !isRegistering) {
+      // If we just recovered session from password-reset link, send to set-new-password
+      try {
+        final container = ProviderScope.containerOf(context);
+        if (container.read(recoveryPendingProvider)) {
+          return '/set-new-password';
+        }
+      } catch (_) {}
+
+      // If not logged in and not on an auth route, redirect to login
+      if (!isLoggedIn && !isAuthRoute) {
         return '/login';
       }
 
-      // If logged in and navigating to login/register or root, redirect to home
+      // If logged in and on login/register/root (but not recovery), redirect to home
       if (isLoggedIn &&
-          (isLoggingIn || isRegistering || state.uri.path == '/')) {
+          (path == '/login' || path == '/register' || path == '/')) {
         return '/home';
       }
 
@@ -64,6 +78,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterPage(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
+        path: '/set-new-password',
+        builder: (context, state) => const SetNewPasswordPage(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -125,6 +147,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'admin',
                     builder: (context, state) => const AdminDashboardPage(),
+                    redirect: (context, state) {
+                      // Guard: only allow admin users
+                      try {
+                        final container = ProviderScope.containerOf(context);
+                        final profile = container
+                            .read(profileProvider)
+                            .valueOrNull;
+                        if (profile == null || profile.role != 'admin') {
+                          return '/home';
+                        }
+                      } catch (_) {
+                        return '/home';
+                      }
+                      return null;
+                    },
                     routes: [
                       GoRoute(
                         path: 'prayer-times',

@@ -176,8 +176,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   icon: Icons.lock_outline,
                   isObscure: true,
                   controller: _confirmPasswordController,
-                  validator: (value) =>
-                      value!.isEmpty ? 'Confirm your password' : null,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Confirm your password';
+                    }
+                    if (value != _passwordController.text) {
+                      return 'Passwords do not match';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 32),
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/event_model.dart';
 import '../models/announcement_model.dart';
@@ -11,7 +12,8 @@ class CommunityRepository {
     final response = await _client
         .from('events')
         .select()
-        .order('event_date', ascending: true);
+        .order('event_date', ascending: true)
+        .limit(50);
 
     return (response as List).map((e) => Event.fromJson(e)).toList();
   }
@@ -20,7 +22,8 @@ class CommunityRepository {
     final response = await _client
         .from('announcements')
         .select()
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .limit(50);
 
     return (response as List).map((e) => Announcement.fromJson(e)).toList();
   }
@@ -70,12 +73,15 @@ class CommunityRepository {
           );
       return _client.storage.from('app_assets').getPublicUrl(path);
     } catch (e) {
-      print('Error uploading image: $e');
+      debugPrint('Error uploading image: $e');
       return null;
     }
   }
 
-  Future<String?> uploadAnnouncementImage(String path, dynamic fileBytes) async {
+  Future<String?> uploadAnnouncementImage(
+    String path,
+    dynamic fileBytes,
+  ) async {
     try {
       await _client.storage
           .from('app_assets')
@@ -86,7 +92,7 @@ class CommunityRepository {
           );
       return _client.storage.from('app_assets').getPublicUrl(path);
     } catch (e) {
-      print('Error uploading announcement image: $e');
+      debugPrint('Error uploading announcement image: $e');
       return null;
     }
   }

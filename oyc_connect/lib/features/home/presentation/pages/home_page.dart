@@ -6,6 +6,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:ntp/ntp.dart';
 import 'dart:async';
 import '../../../prayer_times/presentation/providers/prayer_times_provider.dart';
+import '../../../prayer_times/data/models/prayer_time_model.dart';
 import '../../../prayer_times/data/models/jummah_config.dart';
 import '../widgets/jummah_detail_dialog.dart';
 import '../../../community/presentation/providers/community_providers.dart';
@@ -82,27 +83,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  //   Widget _buildHeader() {
-  //     return Center(
-  //       child: Column(
-  //         children: [
-  //           const SizedBox(height: 0.01),
-  //           Text(
-  //             '1881 MUSALLA', // Uppercase for premium feel
-  //             textAlign: TextAlign.center,
-  //             style: TextStyle(
-  //               color: Color.fromARGB(255, 163, 129, 3), // Muted Gold
-  //               fontSize: 26,
-  //               fontWeight: FontWeight.w900,
-  //               letterSpacing: 2.5, // Wide spacing
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     );
-  //   }
-  // }
-
   Widget _buildHeader() {
     return Center(
       child: Row(
@@ -119,13 +99,18 @@ class _HomePageState extends ConsumerState<HomePage> {
           SizedBox(width: 10),
 
           // 🏷️ Musalla Name
-          Text(
-            '1881 MUSALLA',
-            style: TextStyle(
-              color: Color.fromARGB(255, 163, 129, 3),
-              fontSize: 36,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 2.5,
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '1881 MUSALLA',
+                style: TextStyle(
+                  color: Color.fromARGB(255, 163, 129, 3),
+                  fontSize: 36,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2.5,
+                ),
+              ),
             ),
           ),
         ],
@@ -135,7 +120,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 }
 
 class _PrayerContent extends StatefulWidget {
-  final dynamic prayerTime;
+  final PrayerTime prayerTime;
   final JummahConfig? jummahConfig;
   const _PrayerContent({required this.prayerTime, this.jummahConfig});
 
@@ -202,9 +187,7 @@ class _PrayerContentState extends State<_PrayerContent> {
       });
     }
 
-    if (widget.prayerTime == null) return;
-
-    final pt = widget.prayerTime!;
+    final pt = widget.prayerTime;
     final isFriday = now.weekday == DateTime.friday;
 
     // Robust Parser
@@ -693,7 +676,6 @@ class _PrayerList extends StatelessWidget {
           getPrayerIcon("Fajr"),
           getPrayerColor("Fajr"),
         ),
-        const SizedBox(height: 2),
         const SizedBox(height: 2),
         if (isFriday && jummahConfig != null)
           _buildJummahItem(

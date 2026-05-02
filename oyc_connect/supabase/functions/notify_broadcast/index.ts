@@ -1,8 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const ONE_SIGNAL_APP_ID = "4428e176-2a7f-4d7f-9c28-4ebec13b5001";
-// Note: In production, store this in Deno.env.get("ONESIGNAL_API_KEY")
-const ONE_SIGNAL_API_KEY = "os_v2_app_iquoc5rkp5gx7hbij27mco2qahav72yvfclu2jexb3dw457asdftzhf4vtf5e45ozbln6ruhu5g3j6wcw6ilapalnnjk4by6x6mn4ca";
+const ONE_SIGNAL_APP_ID = Deno.env.get("ONESIGNAL_APP_ID") ?? "";
+const ONE_SIGNAL_API_KEY = Deno.env.get("ONESIGNAL_API_KEY") ?? "";
 
 serve(async (req) => {
   try {
@@ -14,13 +13,13 @@ serve(async (req) => {
 
     // Logic to determine message content based on table fields
     if (record.title && record.body) {
-       // Likely an Announcement
-       title = record.title;
-       body = record.body;
+      // Likely an Announcement
+      title = record.title;
+      body = record.body;
     } else if (record.title && record.event_date) {
-       // Likely an Event
-       title = "New Event: " + record.title;
-       body = record.description || "Join us for this event!";
+      // Likely an Event
+      title = "New Event: " + record.title;
+      body = record.description || "Join us for this event!";
     }
 
     const response = await fetch("https://onesignal.com/api/v1/notifications", {
