@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -11,6 +12,10 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Force hide navigation bar (Immersive Sticky Mode)
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
   tz.initializeTimeZones();
 
   await dotenv.load(fileName: "assets/.env");
@@ -22,7 +27,7 @@ Future<void> main() async {
   );
 
   // Initialize OneSignal
-  OneSignal.initialize("1841c7be-1c1b-4ef4-96ec-17b15b252126");
+  OneSignal.initialize("4428e176-2a7f-4d7f-9c28-4ebec13b5001");
   // Request permission
   OneSignal.Notifications.requestPermission(true);
 

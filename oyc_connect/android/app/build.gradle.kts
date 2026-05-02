@@ -6,6 +6,16 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+
+import java.util.Properties
+import java.io.FileInputStream
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+}
+
 android {
     namespace = "com.example.oyc_connect"
     compileSdk = flutter.compileSdkVersion
@@ -33,9 +43,19 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Disabling R8 for now to avoid missing class errors during quick build
+            isMinifyEnabled = false
+            isShrinkResources = false
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.create("release") {
+                    keyAlias = keystoreProperties["keyAlias"] as String
+                    keyPassword = keystoreProperties["keyPassword"] as String
+                    storeFile = file(keystoreProperties["storeFile"] as String)
+                    storePassword = keystoreProperties["storePassword"] as String
+                }
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+            }
         }
     }
 }

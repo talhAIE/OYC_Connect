@@ -74,4 +74,20 @@ class CommunityRepository {
       return null;
     }
   }
+
+  Future<String?> uploadAnnouncementImage(String path, dynamic fileBytes) async {
+    try {
+      await _client.storage
+          .from('app_assets')
+          .uploadBinary(
+            path,
+            fileBytes,
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+          );
+      return _client.storage.from('app_assets').getPublicUrl(path);
+    } catch (e) {
+      print('Error uploading announcement image: $e');
+      return null;
+    }
+  }
 }

@@ -22,7 +22,12 @@ class MainScaffold extends StatelessWidget {
       extendBody: true, // Important for floating effect over body
       body: navigationShell,
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        margin: const EdgeInsets.fromLTRB(
+          20,
+          0,
+          20,
+          10,
+        ), // Reduced bottom margin
         decoration: BoxDecoration(
           color: const Color.fromARGB(255, 12, 214, 19),
           borderRadius: BorderRadius.circular(30),
@@ -36,37 +41,44 @@ class MainScaffold extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(30),
-          child: BottomNavigationBar(
-            elevation: 0,
-            backgroundColor: Colors.white,
-            selectedItemColor: const Color(0xFF1B5E20),
-            unselectedItemColor: Colors.black.withAlpha(135),
-            showUnselectedLabels: true,
-            type: BottomNavigationBarType.fixed,
-            currentIndex: navigationShell.currentIndex,
-            onTap: _goBranch,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_filled),
-                label: "HOME",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.people_outline),
-                label: "COMMUNITY",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.favorite_border),
-                label: "DONATE",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.school_outlined),
-                label: "CLASSES",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline),
-                label: "PROFILE",
-              ),
-            ],
+          child: MediaQuery.removePadding(
+            context: context,
+            removeBottom: true,
+            child: BottomNavigationBar(
+              elevation: 0,
+              backgroundColor: Colors.white,
+              selectedItemColor: const Color(0xFF1B5E20),
+              unselectedItemColor: Colors.black.withAlpha(135),
+              showUnselectedLabels: true,
+              type: BottomNavigationBarType.fixed,
+              currentIndex: navigationShell.currentIndex,
+              selectedFontSize: 12, // Compact font
+              unselectedFontSize: 12, // Compact font
+              iconSize: 26,
+              onTap: _goBranch,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_filled),
+                  label: "HOME",
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.people_outline),
+                  label: "COMMUNITY",
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.favorite_border),
+                  label: "DONATE",
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.school_outlined),
+                  label: "CLASSES",
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline),
+                  label: "PROFILE",
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -29,6 +29,8 @@ mixin _$Announcement {
   DateTime get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_urgent')
   bool get isUrgent => throw _privateConstructorUsedError;
+  @JsonKey(name: 'image_url')
+  String? get imageUrl => throw _privateConstructorUsedError;
 
   /// Serializes this Announcement to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -53,6 +55,7 @@ abstract class $AnnouncementCopyWith<$Res> {
     @JsonKey(name: 'body') String content,
     @JsonKey(name: 'created_at') DateTime createdAt,
     @JsonKey(name: 'is_urgent') bool isUrgent,
+    @JsonKey(name: 'image_url') String? imageUrl,
   });
 }
 
@@ -76,6 +79,7 @@ class _$AnnouncementCopyWithImpl<$Res, $Val extends Announcement>
     Object? content = null,
     Object? createdAt = null,
     Object? isUrgent = null,
+    Object? imageUrl = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -99,6 +103,10 @@ class _$AnnouncementCopyWithImpl<$Res, $Val extends Announcement>
                 ? _value.isUrgent
                 : isUrgent // ignore: cast_nullable_to_non_nullable
                       as bool,
+            imageUrl: freezed == imageUrl
+                ? _value.imageUrl
+                : imageUrl // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -120,6 +128,7 @@ abstract class _$$AnnouncementImplCopyWith<$Res>
     @JsonKey(name: 'body') String content,
     @JsonKey(name: 'created_at') DateTime createdAt,
     @JsonKey(name: 'is_urgent') bool isUrgent,
+    @JsonKey(name: 'image_url') String? imageUrl,
   });
 }
 
@@ -142,6 +151,7 @@ class __$$AnnouncementImplCopyWithImpl<$Res>
     Object? content = null,
     Object? createdAt = null,
     Object? isUrgent = null,
+    Object? imageUrl = freezed,
   }) {
     return _then(
       _$AnnouncementImpl(
@@ -165,6 +175,10 @@ class __$$AnnouncementImplCopyWithImpl<$Res>
             ? _value.isUrgent
             : isUrgent // ignore: cast_nullable_to_non_nullable
                   as bool,
+        imageUrl: freezed == imageUrl
+            ? _value.imageUrl
+            : imageUrl // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -179,6 +193,7 @@ class _$AnnouncementImpl implements _Announcement {
     @JsonKey(name: 'body') required this.content,
     @JsonKey(name: 'created_at') required this.createdAt,
     @JsonKey(name: 'is_urgent') this.isUrgent = false,
+    @JsonKey(name: 'image_url') this.imageUrl,
   });
 
   factory _$AnnouncementImpl.fromJson(Map<String, dynamic> json) =>
@@ -197,10 +212,13 @@ class _$AnnouncementImpl implements _Announcement {
   @override
   @JsonKey(name: 'is_urgent')
   final bool isUrgent;
+  @override
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
 
   @override
   String toString() {
-    return 'Announcement(id: $id, title: $title, content: $content, createdAt: $createdAt, isUrgent: $isUrgent)';
+    return 'Announcement(id: $id, title: $title, content: $content, createdAt: $createdAt, isUrgent: $isUrgent, imageUrl: $imageUrl)';
   }
 
   @override
@@ -214,13 +232,22 @@ class _$AnnouncementImpl implements _Announcement {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.isUrgent, isUrgent) ||
-                other.isUrgent == isUrgent));
+                other.isUrgent == isUrgent) &&
+            (identical(other.imageUrl, imageUrl) ||
+                other.imageUrl == imageUrl));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, title, content, createdAt, isUrgent);
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    title,
+    content,
+    createdAt,
+    isUrgent,
+    imageUrl,
+  );
 
   /// Create a copy of Announcement
   /// with the given fields replaced by the non-null parameter values.
@@ -243,6 +270,7 @@ abstract class _Announcement implements Announcement {
     @JsonKey(name: 'body') required final String content,
     @JsonKey(name: 'created_at') required final DateTime createdAt,
     @JsonKey(name: 'is_urgent') final bool isUrgent,
+    @JsonKey(name: 'image_url') final String? imageUrl,
   }) = _$AnnouncementImpl;
 
   factory _Announcement.fromJson(Map<String, dynamic> json) =
@@ -261,6 +289,9 @@ abstract class _Announcement implements Announcement {
   @override
   @JsonKey(name: 'is_urgent')
   bool get isUrgent;
+  @override
+  @JsonKey(name: 'image_url')
+  String? get imageUrl;
 
   /// Create a copy of Announcement
   /// with the given fields replaced by the non-null parameter values.

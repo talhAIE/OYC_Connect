@@ -6,7 +6,6 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:ntp/ntp.dart';
 import 'dart:async';
 import '../../../prayer_times/presentation/providers/prayer_times_provider.dart';
-import '../../../prayer_times/data/models/prayer_time_model.dart';
 import '../../../prayer_times/data/models/jummah_config.dart';
 import '../widgets/jummah_detail_dialog.dart';
 import '../../../community/presentation/providers/community_providers.dart';
@@ -135,69 +134,45 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 }
 
-class _PrayerContent extends StatelessWidget {
+class _PrayerContent extends StatefulWidget {
   final dynamic prayerTime;
   final JummahConfig? jummahConfig;
   const _PrayerContent({required this.prayerTime, this.jummahConfig});
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Time just above the card, left aligned
-        const Align(
-          alignment: Alignment.centerLeft,
-          child: Padding(
-            padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
-            child: _MelbourneClock(),
-          ),
-        ),
-        _NextPrayerCard(prayerTime: prayerTime),
-        const SizedBox(height: 16),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            "Today's Times",
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.black.withAlpha(175),
-              letterSpacing: 1.2,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        // We need next prayer info to highlight the list, but for now let's just highlight based on time
-        _PrayerList(prayerTime: prayerTime, jummahConfig: jummahConfig),
-      ],
-    );
-  }
+  State<_PrayerContent> createState() => _PrayerContentState();
 }
 
-class _NextPrayerCard extends StatefulWidget {
-  final PrayerTime? prayerTime;
-  const _NextPrayerCard({required this.prayerTime});
-
-  @override
-  State<_NextPrayerCard> createState() => _NextPrayerCardState();
-}
-
-class _NextPrayerCardState extends State<_NextPrayerCard> {
+class _PrayerContentState extends State<_PrayerContent> {
   Timer? _timer;
   String _nextPrayerName = "--";
   String _nextPrayerTime = "--:--";
   String _countdown = "--";
+  String _activePrayerName = ""; // For highlighting the list
+  int _ntpOffset = 0;
+  String _currentClockTime = "--:--:--"; // Unified clock time
+  bool _isIqamahMode = false; // New state for UI label
 
   @override
   void initState() {
     super.initState();
+    _syncNtp();
     _startTimer();
   }
 
+  Future<void> _syncNtp() async {
+    try {
+      _ntpOffset = await NTP.getNtpOffset(localTime: DateTime.now());
+    } catch (_) {
+      // Fail silently, default to device time
+    }
+  }
+
   @override
-  void didUpdateWidget(covariant _NextPrayerCard oldWidget) {
+  void didUpdateWidget(covariant _PrayerContent oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.prayerTime != oldWidget.prayerTime) {
+    if (widget.prayerTime != oldWidget.prayerTime ||
+        widget.jummahConfig != oldWidget.jummahConfig) {
       _updateCalculation();
     }
   }
@@ -216,14 +191,23 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
   }
 
   void _updateCalculation() {
+    final melbourne = tz.getLocation('Australia/Melbourne');
+    // Adjust local device time by NTP offset to match the Clock widget
+    final trueNow = DateTime.now().add(Duration(milliseconds: _ntpOffset));
+    final now = tz.TZDateTime.from(trueNow, melbourne);
+
+    if (mounted) {
+      setState(() {
+        _currentClockTime = DateFormat('hh:mm:ss a').format(now);
+      });
+    }
+
     if (widget.prayerTime == null) return;
 
-    final melbourne = tz.getLocation('Australia/Melbourne');
-    final now = tz.TZDateTime.now(melbourne);
     final pt = widget.prayerTime!;
+    final isFriday = now.weekday == DateTime.friday;
 
-    // Robust Parser using Regex to avoid format/locale issues
-    // Matches "4:39" or "4:39 AM" or "4:39AM" etc.
+    // Robust Parser
     tz.TZDateTime? parseTime(String? timeStr) {
       if (timeStr == null || timeStr.isEmpty) return null;
       try {
@@ -235,7 +219,6 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
         int minute = int.parse(match.group(2)!);
         String? period = match.group(3)?.toUpperCase();
 
-        // Handle 12-hour format if AM/PM is present
         if (period != null) {
           if (period == 'PM' && hour != 12) hour += 12;
           if (period == 'AM' && hour == 12) hour = 0;
@@ -254,66 +237,124 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
       }
     }
 
-    final prayers = {
-      "FAJR": parseTime(pt.fajr),
-      "DHUHR": parseTime(pt.dhuhr),
-      "ASR": parseTime(pt.asr),
-      "MAGHRIB": parseTime(pt.maghrib),
-      "ISHA": parseTime(pt.isha),
-    };
+    // Helper to get limit (Iqamah ?? Adhan + 10m)
+    // NOTE: User wants "Stay at Adhan time until Iqamah".
+    // So we need:
+    // 1. DisplayTime (Adhan)
+    // 2. ThresholdTime (Iqamah)
+    Map<String, dynamic> buildPrayerData(String adhanStr, String? iqamaStr) {
+      final adhan = parseTime(adhanStr);
+      tz.TZDateTime? limit = parseTime(iqamaStr);
 
-    // Check if we didn't get any valid times
-    if (prayers.values.every((v) => v == null)) {
-      if (mounted)
-        setState(() {
-          _countdown = "Error Parsing";
-        });
-      return;
+      // If no iqamah, maybe fallback to adhan + 20 mins?
+      // Or just use adhan if that's the data behavior.
+      // Let's assume there is always ample time.
+      // If limit is null, we set it to adhan to maintain safety,
+      // but effectively this means it switches at Adhan.
+      limit ??= adhan;
+
+      return {"adhan": adhan, "limit": limit};
     }
 
-    // Sort
-    final sortedKeys = prayers.keys.toList()
+    final prayersData = {
+      "FAJR": buildPrayerData(pt.fajr, pt.fajrIqama),
+      "DHUHR": buildPrayerData(pt.dhuhr, pt.dhuhrIqama),
+      "ASR": buildPrayerData(pt.asr, pt.asrIqama),
+      "MAGHRIB": buildPrayerData(pt.maghrib, pt.maghribIqama),
+      "ISHA": buildPrayerData(pt.isha, pt.ishaIqama),
+    };
+
+    if (isFriday && widget.jummahConfig != null) {
+      // For Jummah: Display = Khutbah, Limit = JummahTime (Jamaat)
+      final khutbah = parseTime(widget.jummahConfig!.khutbahTime);
+      final jamaat = parseTime(widget.jummahConfig!.jummahTime);
+
+      prayersData["JUMMAH"] = {"adhan": khutbah, "limit": jamaat ?? khutbah};
+    }
+
+    // Sort by Display Time (Adhan)
+    final sortedKeys = prayersData.keys.toList()
       ..sort((a, b) {
-        final tA = prayers[a];
-        final tB = prayers[b];
+        final dataA = prayersData[a];
+        final dataB = prayersData[b];
+        if (dataA == null || dataB == null) return 0;
+        final tA = dataA["adhan"] as tz.TZDateTime?;
+        final tB = dataB["adhan"] as tz.TZDateTime?;
         if (tA == null) return 1;
         if (tB == null) return -1;
         return tA.compareTo(tB);
       });
 
-    String? nextName;
-    tz.TZDateTime? nextTime;
+    String? determinedName;
+    tz.TZDateTime? determinedTime;
+    bool isIqamah = false;
 
+    // Logic: Find first prayer where Now < Limit
     for (var key in sortedKeys) {
-      final t = prayers[key];
-      if (t != null && t.isAfter(now)) {
-        nextName = key;
-        nextTime = t;
+      final data = prayersData[key];
+      if (data == null) continue;
+      final limit = data["limit"] as tz.TZDateTime?;
+      final adhan = data["adhan"] as tz.TZDateTime?;
+
+      if (limit != null && now.isBefore(limit)) {
+        determinedName = key;
+
+        if (adhan != null && now.isAfter(adhan)) {
+          // Adhan passed, waiting for Iqamah
+          determinedTime = limit;
+          isIqamah = true;
+        } else {
+          // Before Adhan
+          determinedTime = adhan;
+          isIqamah = false;
+        }
         break;
       }
     }
 
     // Fallback: Tomorrow Fajr
-    if (nextName == null) {
-      nextName = "FAJR (TOMORROW)";
-      final t = prayers["FAJR"];
-      if (t != null) {
-        nextTime = t.add(const Duration(days: 1));
+    if (determinedName == null) {
+      determinedName = "FAJR";
+      final data = prayersData["FAJR"];
+      if (data != null && data["adhan"] != null) {
+        // Create tomorrow's time
+        final t = data["adhan"] as tz.TZDateTime;
+        determinedTime = t.add(const Duration(days: 1));
+        isIqamah = false;
       }
     }
 
     if (mounted) {
       setState(() {
-        _nextPrayerName = nextName ?? "NONE";
+        _isIqamahMode = isIqamah;
+        _nextPrayerName = determinedName ?? "NONE";
+
+        // Active Prayer Name for List (Strip " (TOMORROW)" for matching)
+        _activePrayerName = _nextPrayerName
+            .replaceAll(" (TOMORROW)", "")
+            .trim(); // e.g. "FAJR"
 
         // Show Adhan Time
-        _nextPrayerTime = nextTime != null
-            ? DateFormat.jm().format(nextTime)
+        _nextPrayerTime = determinedTime != null
+            ? DateFormat.jm().format(determinedTime)
             : "--:--";
 
-        if (nextTime != null) {
-          final diff = nextTime.difference(now);
+        if (determinedTime != null) {
+          final diff = determinedTime.difference(now);
+          // If diff is negative (e.g. Now is 5:10, Fajr is 5:00),
+          // it means Adhan passed, but we are waiting for Iqamah.
+          // User: "Stayed on that adhan time".
+          // The countdown typically counts DOWN to the Adhan.
+          // If Adhan passed, maybe show "IQAMAH IN..." or just "NOW"?
+          // Use Case: 8:26 Adhan. 8:30 Now. 8:36 Iqamah.
+          // Card shows: MAGHRIB 8:26 PM.
+          // Countdown: We can show "Since 4m" or "Iqamah in 6m"?
+          // Let's stick to "NOW" if adhan passed, or maybe "IQAMAH SOON".
+          // User didn't specify countdown behavior, just card content.
+          // Current logic: `if (diff.isNegative) "NOW"`. Keep it.
+
           if (diff.isNegative) {
+            // We are in the grace period before Iqamah
             _countdown = "NOW";
           } else {
             final hours = diff.inHours;
@@ -327,6 +368,63 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
       });
     }
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Time just above the card
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+            child: _MelbourneClock(
+              timeStr: _currentClockTime,
+            ), // Pass unified time
+          ),
+        ),
+        _NextPrayerCard(
+          prayerName: _nextPrayerName,
+          prayerTime: _nextPrayerTime,
+          countdown: _countdown,
+          isIqamah: _isIqamahMode, // Pass mode to card
+        ),
+        const SizedBox(height: 16),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Today's Times",
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.black.withAlpha(175),
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _PrayerList(
+          prayerTime: widget.prayerTime,
+          jummahConfig: widget.jummahConfig,
+          activePrayerName: _activePrayerName, // Passing state down
+        ),
+      ],
+    );
+  }
+}
+
+class _NextPrayerCard extends StatelessWidget {
+  final String prayerName;
+  final String prayerTime;
+  final String countdown;
+  final bool isIqamah; // New param
+
+  const _NextPrayerCard({
+    required this.prayerName,
+    required this.prayerTime,
+    required this.countdown,
+    this.isIqamah = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -350,7 +448,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color.fromARGB(255, 1, 107, 1), // Rich Teal
+            Color.fromARGB(255, 1, 107, 1), // Same green as adhan time
             Color.fromARGB(255, 29, 99, 1), // Darker Teal
           ],
         ),
@@ -380,7 +478,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "NEXT PRAYER",
+                      isIqamah ? "IQAMAH" : "NEXT PRAYER", // Dynamic Label
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 13,
@@ -406,19 +504,26 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Name
-                    Text(
-                      _nextPrayerName.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white, // Amber/Gold accent
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
+                    // Name (Flexible to avoid overflow)
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          prayerName.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white, // Amber/Gold accent
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     // Time
                     Text(
-                      _nextPrayerTime,
+                      prayerTime,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 36,
@@ -453,7 +558,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            "In $_countdown",
+                            "In $countdown",
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.95),
                               fontSize: 13,
@@ -518,41 +623,19 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
 class _PrayerList extends StatelessWidget {
   final dynamic prayerTime;
   final JummahConfig? jummahConfig;
-  const _PrayerList({required this.prayerTime, this.jummahConfig});
+  final String activePrayerName; // From parent
+
+  const _PrayerList({
+    required this.prayerTime,
+    this.jummahConfig,
+    required this.activePrayerName,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // We re-calculate current prayer here simply to highlight
     final melbourne = tz.getLocation('Australia/Melbourne');
     final now = tz.TZDateTime.now(melbourne);
     final isFriday = now.weekday == DateTime.friday;
-
-    // Robust Parser (duplicated for now for simplicity in stateless widget)
-    tz.TZDateTime? parseTime(String? timeStr) {
-      if (timeStr == null || timeStr.isEmpty) return null;
-      try {
-        final re = RegExp(r'(\d+):(\d+)\s*(AM|PM)?', caseSensitive: false);
-        final match = re.firstMatch(timeStr);
-        if (match == null) return null;
-        int hour = int.parse(match.group(1)!);
-        int minute = int.parse(match.group(2)!);
-        String? period = match.group(3)?.toUpperCase();
-        if (period != null) {
-          if (period == 'PM' && hour != 12) hour += 12;
-          if (period == 'AM' && hour == 12) hour = 0;
-        }
-        return tz.TZDateTime(
-          melbourne,
-          now.year,
-          now.month,
-          now.day,
-          hour,
-          minute,
-        );
-      } catch (e) {
-        return null;
-      }
-    }
 
     IconData getPrayerIcon(String name) {
       switch (name) {
@@ -592,30 +675,13 @@ class _PrayerList extends StatelessWidget {
       }
     }
 
-    final prayers = {
-      "Fajr": parseTime(prayerTime.fajr),
-      "Dhuhr": parseTime(prayerTime.dhuhr),
-      "Asr": parseTime(prayerTime.asr),
-      "Maghrib": parseTime(prayerTime.maghrib),
-      "Isha": parseTime(prayerTime.isha),
-    };
-
-    // Let's reuse logic: Find first prayer > now.
-    String? nextName;
-    final sortedKeys = prayers.keys.toList()
-      ..sort((a, b) => (prayers[a]?.compareTo(prayers[b]!) ?? 0));
-
-    for (var key in sortedKeys) {
-      final t = prayers[key];
-      if (t != null && t.isAfter(now)) {
-        nextName = key;
-        break;
-      }
+    // Match ignoring case and "JUMMAH" vs "Dhuhr" on Friday
+    bool checkActive(String name) {
+      if (activePrayerName.toUpperCase() == name.toUpperCase()) return true;
+      // Handle JUMMAH / DHUHR alias
+      if (name == "Dhuhr" && activePrayerName == "JUMMAH") return true;
+      return false;
     }
-
-    // If nextName is null (after Isha), usually we highlight Fajr (tomorrow) or keep Isha?
-    // Let's highlight Fajr if it's tomorrow.
-    final target = nextName ?? "Fajr";
 
     return Column(
       children: [
@@ -623,20 +689,24 @@ class _PrayerList extends StatelessWidget {
           "Fajr",
           prayerTime.fajr,
           prayerTime.fajrIqama,
-          target == "Fajr",
+          checkActive("Fajr"),
           getPrayerIcon("Fajr"),
           getPrayerColor("Fajr"),
         ),
         const SizedBox(height: 2),
         const SizedBox(height: 2),
         if (isFriday && jummahConfig != null)
-          _buildJummahItem(context, jummahConfig!, target == "Dhuhr")
+          _buildJummahItem(
+            context,
+            jummahConfig!,
+            checkActive("JUMMAH") || checkActive("Dhuhr"),
+          )
         else
           _buildPrayerItem(
             "Dhuhr",
             prayerTime.dhuhr,
             prayerTime.dhuhrIqama,
-            target == "Dhuhr",
+            checkActive("Dhuhr"),
             getPrayerIcon("Dhuhr"),
             getPrayerColor("Dhuhr"),
           ),
@@ -645,7 +715,7 @@ class _PrayerList extends StatelessWidget {
           "Asr",
           prayerTime.asr,
           prayerTime.asrIqama,
-          target == "Asr",
+          checkActive("Asr"),
           getPrayerIcon("Asr"),
           getPrayerColor("Asr"),
         ),
@@ -654,7 +724,7 @@ class _PrayerList extends StatelessWidget {
           "Maghrib",
           prayerTime.maghrib,
           prayerTime.maghribIqama,
-          target == "Maghrib",
+          checkActive("Maghrib"),
           getPrayerIcon("Maghrib"),
           getPrayerColor("Maghrib"),
         ),
@@ -663,7 +733,7 @@ class _PrayerList extends StatelessWidget {
           "Isha",
           prayerTime.isha,
           prayerTime.ishaIqama,
-          target == "Isha",
+          checkActive("Isha"),
           getPrayerIcon("Isha"),
           getPrayerColor("Isha"),
         ),
@@ -789,6 +859,7 @@ class _PrayerList extends StatelessWidget {
         );
       },
       child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
           color: Colors.white, // Light theme
@@ -864,62 +935,14 @@ class _PrayerList extends StatelessWidget {
   }
 }
 
-class _MelbourneClock extends StatefulWidget {
-  const _MelbourneClock();
-
-  @override
-  State<_MelbourneClock> createState() => _MelbourneClockState();
-}
-
-class _MelbourneClockState extends State<_MelbourneClock> {
-  Timer? _timer;
-  String _timeStr = "--:--:--";
-  int _ntpOffset = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _syncNtp();
-    // Start timer immediately, updateTime will use 0 offset until sync completes
-    _updateTime();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _updateTime());
-  }
-
-  Future<void> _syncNtp() async {
-    try {
-      _ntpOffset = await NTP.getNtpOffset(localTime: DateTime.now());
-    } catch (_) {
-      // Fail silently, default to device time
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _updateTime() {
-    final melbourne = tz.getLocation('Australia/Melbourne');
-    // Adjust local device time by NTP offset to get "True" time
-    final trueNow = DateTime.now().add(Duration(milliseconds: _ntpOffset));
-    final nowMel = tz.TZDateTime.from(trueNow, melbourne);
-
-    final str = DateFormat('hh:mm:ss a').format(nowMel);
-
-    if (mounted) {
-      if (_timeStr != str) {
-        setState(() {
-          _timeStr = str;
-        });
-      }
-    }
-  }
+class _MelbourneClock extends StatelessWidget {
+  final String timeStr;
+  const _MelbourneClock({required this.timeStr});
 
   @override
   Widget build(BuildContext context) {
     return Text(
-      _timeStr,
+      timeStr,
       style: TextStyle(
         fontSize: 15,
         fontWeight: FontWeight.w900,

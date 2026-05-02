@@ -47,11 +47,37 @@ class JummahDetailDialog extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Khutbah Section
+            // Khutbah Section
             _buildInfoText(
               "Khutbah start at ${config.khutbahTime}",
               "throughout the year",
               isHighlight: true,
             ),
+
+            if (config.khateebName != null &&
+                config.khateebName!.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              const Text(
+                "Khateeb",
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                config.khateebName!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
 
             const SizedBox(height: 32),
 

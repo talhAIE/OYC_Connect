@@ -3,6 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/classes_providers.dart';
 import '../../data/models/weekly_schedule_model.dart';
 
+// Theme aligned with Community / Discover Hub
+class _ClassesTheme {
+  static const Color primaryNavy = Color(0xFF0F172A);
+  static const Color primaryTeal = Color(0xFF006D5B);
+  static const Color quranAccent = Color(0xFF0F766E);
+  static const Color labelGrey = Color(0xFF64748B);
+  static const Color cardBorder = Color(0xFFE2E8F0);
+  static const Color surfaceBg = Color(0xFFF8FAFC);
+}
+
 class ClassesSchedulePage extends ConsumerStatefulWidget {
   const ClassesSchedulePage({super.key});
 
@@ -14,12 +24,11 @@ class ClassesSchedulePage extends ConsumerStatefulWidget {
 class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
     with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => false; // Don't keep alive to ensure fresh data
+  bool get wantKeepAlive => false;
 
   @override
   void initState() {
     super.initState();
-    // Invalidate providers on page load to ensure fresh data
     Future.microtask(() {
       ref.invalidate(weeklySchedulesProvider);
       ref.invalidate(quranSchedulesProvider);
@@ -33,139 +42,45 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    super.build(context);
 
     final weeklyAsync = ref.watch(weeklySchedulesProvider);
     final quranAsync = ref.watch(quranSchedulesProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: _ClassesTheme.surfaceBg,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refreshData,
-          color: const Color(0xFF1B5E20),
+          color: _ClassesTheme.primaryTeal,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Compact Header
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.school,
-                        color: Color(0xFF1B5E20),
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Weekly Classes',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Compact Info Banner
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE3F2FD),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFF1976D2).withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.info_outline,
-                        color: Color(0xFF1976D2),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'All classes held between Maghrib & Isha, unless stated otherwise.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.blue[900],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildHeader(),
                 const SizedBox(height: 20),
-
-                // Weekly Schedule Section
-                Text(
-                  'WEEKLY SCHEDULE',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black.withAlpha(185),
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
+                _buildInfoBanner(),
+                const SizedBox(height: 28),
+                _buildSectionLabel('WEEKLY SCHEDULE'),
+                const SizedBox(height: 14),
                 weeklyAsync.when(
                   data: (schedules) =>
-                      _buildCompactScheduleList(schedules, type: 'weekly'),
-                  loading: () => const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                  error: (err, stack) => Center(child: Text('Error: $err')),
+                      _buildScheduleList(schedules, type: 'weekly'),
+                  loading: () => _buildLoading(),
+                  error: (err, stack) => _buildError('$err'),
                 ),
-
-                const SizedBox(height: 20),
-
-                // Qur'an Classes Section
-                Text(
-                  "QUR'AN CLASSES",
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black.withAlpha(185),
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
+                const SizedBox(height: 28),
+                _buildSectionLabel("QUR'AN CLASSES"),
+                const SizedBox(height: 14),
                 quranAsync.when(
                   data: (schedules) =>
-                      _buildCompactScheduleList(schedules, type: 'quran'),
-                  loading: () => const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                  error: (err, stack) => Center(child: Text('Error: $err')),
+                      _buildScheduleList(schedules, type: 'quran'),
+                  loading: () => _buildLoading(),
+                  error: (err, stack) => _buildError('$err'),
                 ),
-
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
               ],
             ),
           ),
@@ -174,29 +89,142 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
     );
   }
 
-  Widget _buildCompactScheduleList(
+  Widget _buildHeader() {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _ClassesTheme.primaryTeal.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(
+            Icons.calendar_month_rounded,
+            color: _ClassesTheme.primaryTeal,
+            size: 28,
+          ),
+        ),
+        const SizedBox(width: 16),
+        const Expanded(
+          child: Text(
+            'Weekly Classes',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: _ClassesTheme.primaryNavy,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoBanner() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: _ClassesTheme.primaryTeal.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _ClassesTheme.primaryTeal.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            color: _ClassesTheme.primaryTeal,
+            size: 22,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'All classes held between Maghrib & Isha, unless stated otherwise.',
+              style: TextStyle(
+                fontSize: 14,
+                color: _ClassesTheme.primaryNavy.withOpacity(0.85),
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(String label) {
+    return Text(
+      label,
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        color: _ClassesTheme.labelGrey,
+        letterSpacing: 1.2,
+      ),
+    );
+  }
+
+  Widget _buildLoading() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 24),
+      child: Center(
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(
+            color: _ClassesTheme.primaryTeal,
+            strokeWidth: 2.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildError(String message) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: Text(
+          message,
+          style: TextStyle(
+            color: Colors.red.shade700,
+            fontSize: 14,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScheduleList(
     List<WeeklyScheduleModel> schedules, {
     required String type,
   }) {
     if (schedules.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Center(
           child: Text(
             'No ${type == 'weekly' ? 'weekly' : "Qur'an"} classes scheduled yet.',
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
+            style: TextStyle(
+              color: _ClassesTheme.labelGrey,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       );
     }
 
-    // Group schedules by class+teacher+time to merge day ranges
     final grouped = _groupSchedules(schedules);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: grouped.map((group) {
-        return _buildCompactScheduleCard(group, type: type);
+        return _buildScheduleCard(group, type: type);
       }).toList(),
     );
   }
@@ -230,123 +258,106 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
     return groups.values.toList();
   }
 
-  Widget _buildCompactScheduleCard(
+  Widget _buildScheduleCard(
     _ScheduleGroup group, {
     required String type,
   }) {
-    final iconColor = type == 'quran'
-        ? const Color(0xFF6A1B9A)
-        : const Color(0xFF1B5E20);
-    final bgColor = type == 'quran'
-        ? const Color(0xFFF3E5F5)
-        : const Color(0xFFE8F5E9);
-    final icon = type == 'quran' ? Icons.menu_book : Icons.calendar_today;
+    final isQuran = type == 'quran';
+    final accentColor =
+        isQuran ? _ClassesTheme.quranAccent : _ClassesTheme.primaryTeal;
+    final iconBg = accentColor.withOpacity(0.12);
+    final icon = isQuran
+        ? Icons.auto_stories_rounded
+        : Icons.event_note_rounded;
     final hasTime = group.startTime != null && group.endTime != null;
-
-    // Format day range
     final dayDisplay = _formatDayRange(group.days);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _ClassesTheme.cardBorder, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: _ClassesTheme.primaryNavy.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icon
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(8),
+              color: iconBg,
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: iconColor, size: 18),
+            child: Icon(icon, color: accentColor, size: 22),
           ),
-          const SizedBox(width: 12),
-
-          // Content
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Day range
                 Text(
                   dayDisplay,
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: iconColor,
-                    letterSpacing: 0.3,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: accentColor,
+                    letterSpacing: 0.2,
                   ),
                 ),
-                const SizedBox(height: 4),
-
-                // Class name and teacher in one line
-                Row(
-                  children: [
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: group.className ?? 'Unknown Class',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (group.teacherName != null) ...[
-                              TextSpan(
-                                text: ' (${group.teacherName})',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black.withAlpha(205),
-                                  fontWeight: FontWeight.normal,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 6),
+                Text(
+                  group.className ?? 'Unknown Class',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: _ClassesTheme.primaryNavy,
+                    letterSpacing: -0.3,
+                  ),
                 ),
+                if (group.teacherName != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    group.teacherName!,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: _ClassesTheme.primaryNavy.withOpacity(0.65),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
-
-          // Time badge
           if (hasTime)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(8),
+                color: iconBg,
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.access_time, size: 13, color: iconColor),
-                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.schedule_rounded,
+                    size: 14,
+                    color: accentColor,
+                  ),
+                  const SizedBox(width: 5),
                   Text(
                     '${group.startTime}–${group.endTime}',
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: iconColor,
+                      fontWeight: FontWeight.w700,
+                      color: accentColor,
                     ),
                   ),
                 ],

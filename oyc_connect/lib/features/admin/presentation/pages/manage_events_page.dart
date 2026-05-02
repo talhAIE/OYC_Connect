@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/constants/supabase_constants.dart';
 import '../../../../core/theme/app_pallete.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../features/community/data/models/event_model.dart';
@@ -51,10 +52,9 @@ class _ManageEventsPageState extends ConsumerState<ManageEventsPage> {
         throw Exception("Failed to upload image. Please try again.");
       }
       imageUrl = uploadedUrl;
-    } else if (imageUrl == null && event.id == 0) {
-      // 2. Default image for NEW events if no image selected
-      imageUrl =
-          "https://ghrwefeyeyolszbgeqvc.supabase.co/storage/v1/object/public/app_assets/defaultoycimage.jpg";
+    } else if (imageUrl == null || imageUrl.isEmpty) {
+      // 2. Default image when no image selected (new or existing event)
+      imageUrl = SupabaseConstants.defaultEventImageUrl;
     }
 
     // 3. Create Event object with final URL

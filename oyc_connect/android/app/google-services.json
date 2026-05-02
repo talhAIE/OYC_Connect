@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "662499284541",
-    "project_id": "oyc-connect-a9c02",
-    "storage_bucket": "oyc-connect-a9c02.firebasestorage.app"
+    "project_number": "497994366848",
+    "project_id": "oyc-connect-da039",
+    "storage_bucket": "oyc-connect-da039.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:662499284541:android:f896ee228ca5fa1f3fbc54",
+        "mobilesdk_app_id": "1:497994366848:android:7955915fdd94e09ccccb65",
         "android_client_info": {
           "package_name": "com.example.oyc_connect"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBYdYJk3Eoi5SWEzIB-Eka6sQnCN3eHz8c"
+          "current_key": "AIzaSyB0rwkDq3ltpp3L8s2AqgvqRwZ-d90ZGdA"
         }
       ],
       "services": {
