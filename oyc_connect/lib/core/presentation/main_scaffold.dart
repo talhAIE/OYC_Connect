@@ -66,8 +66,8 @@ class MainScaffold extends StatelessWidget {
                   label: "COMMUNITY",
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.favorite_border),
-                  label: "DONATE",
+                  icon: Icon(Icons.open_in_browser_rounded),
+                  label: "WEBSITE",
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.school_outlined),

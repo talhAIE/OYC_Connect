@@ -4,8 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/donation_constants.dart';
 
-/// Donations open [DonationConstants.generalDonationUri] in an in-app browser
-/// (SFSafariViewController on iOS, Custom Tabs on Android)—not in-app payment UI.
+/// Opens the official donation page in the external browser only.
 class DonationPage extends ConsumerStatefulWidget {
   const DonationPage({super.key});
 
@@ -22,13 +21,13 @@ class _DonationPageState extends ConsumerState<DonationPage> {
     try {
       final launched = await launchUrl(
         uri,
-        mode: LaunchMode.inAppBrowserView,
+        mode: LaunchMode.externalApplication,
       );
       if (!mounted) return;
       if (!launched) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Could not open the donation page. Try again.'),
+            content: Text('Could not open the website. Try again.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -37,7 +36,7 @@ class _DonationPageState extends ConsumerState<DonationPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Could not open the donation page. Try again.'),
+          content: Text('Could not open the website. Try again.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -75,7 +74,7 @@ class _DonationPageState extends ConsumerState<DonationPage> {
                         )
                       : const Icon(Icons.open_in_browser_rounded),
                   label: Text(
-                    _opening ? 'Opening…' : 'Donate on our website',
+                    _opening ? 'Opening browser...' : 'Open donation website',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -184,7 +183,7 @@ class _DonationPageState extends ConsumerState<DonationPage> {
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
-                  'Secure donation',
+                  'External website',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 17,
@@ -196,7 +195,7 @@ class _DonationPageState extends ConsumerState<DonationPage> {
           ),
           const SizedBox(height: 14),
           Text(
-            'Contributions are completed on our official website in your browser—choose your amount and payment method there.',
+            'This app does not process payments. Tapping the button opens our official website in your device browser, where donations are completed.',
             style: TextStyle(
               fontSize: 15,
               height: 1.45,
