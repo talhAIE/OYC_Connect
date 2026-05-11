@@ -17,7 +17,6 @@ class RegisterPage extends ConsumerStatefulWidget {
 class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -26,7 +25,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   void dispose() {
     _fullNameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -47,7 +45,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
             fullName: _fullNameController.text.trim(),
-            phone: _phoneController.text.trim(),
           );
     }
   }
@@ -127,25 +124,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     );
                     if (!emailRegex.hasMatch(value)) {
                       return 'Please enter a valid email address';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Phone
-                CustomField(
-                  hintText: 'Phone Number',
-                  icon: Icons.phone_outlined,
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Phone number is required';
-                    }
-                    // Basic digits check
-                    if (!RegExp(r'^[0-9+]+$').hasMatch(value)) {
-                      return 'Please enter a valid phone number';
                     }
                     return null;
                   },
