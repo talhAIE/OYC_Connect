@@ -12,13 +12,12 @@ class AuthRepository {
     required String email,
     required String password,
     required String fullName,
-    required String phone,
   }) async {
     try {
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
-        data: {'full_name': fullName, 'phone': phone},
+        data: {'full_name': fullName},
       );
 
       // Enable notifications after successful signup

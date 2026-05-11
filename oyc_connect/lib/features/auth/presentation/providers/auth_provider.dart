@@ -33,7 +33,6 @@ class AuthController extends Notifier<AsyncValue<void>> {
     required String email,
     required String password,
     required String fullName,
-    required String phone,
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -41,7 +40,6 @@ class AuthController extends Notifier<AsyncValue<void>> {
         email: email,
         password: password,
         fullName: fullName,
-        phone: phone,
       );
       // Force sign out so user has to log in manually
       await signOut();
