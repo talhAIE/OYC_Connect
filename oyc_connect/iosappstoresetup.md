@@ -9,6 +9,7 @@ This guide provides a comprehensive step-by-step walkthrough for configuring, bu
 Before you begin, ensure you have:
 - ✅ **Apple Developer Program Enrollment** ($99/year active subscription).
   - Sign in at [developer.apple.com](https://developer.apple.com/).
+/Users/amman/Desktop/OYC_Connect/oyc_connect/ios/Runner.xcworkspace
 - ✅ **Mac Computer** with the latest version of **Xcode** installed.
 - ✅ **App Assets Ready**:
   - App Icon (1024x1024 px PNG, no transparency).
