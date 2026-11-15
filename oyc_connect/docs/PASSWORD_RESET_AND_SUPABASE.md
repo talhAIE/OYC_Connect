@@ -88,19 +88,23 @@ To customize the reset email text:
 
 1. **Forgot password**  
    User taps “Forgot Password?” on the login screen → **Forgot Password** page → enters email → taps “Send Reset Link”.  
-   App calls `Supabase.auth.resetPasswordForEmail(email, redirectTo: 'oycconnect://reset-password')`.
+   App calls the `request-password-reset` Edge Function with the email and `oycconnect://reset-password` redirect.
 
 2. **Email**  
    User receives the email and taps the link.
 
 3. **Open app**  
    Link opens the app (Android/iOS deep link `oycconnect://reset-password` with tokens in the fragment).  
-   `AppLinkHandler` receives the link, calls `getSessionFromUrl(uri)`, and sets `recoveryPendingProvider = true`.  
-   Router redirects to **Set New Password**.
+   `PasswordRecoveryController` owns both launch and incoming links. It locks navigation and persists the recovery marker **before** calling `getSessionFromUrl(uri)`. Duplicate link deliveries exchange the code only once.
+   Router waits for the launch-link check, then shows **Set New Password** for a fresh valid link. Processed callback fingerprints are persisted so retained launch intents cannot reopen recovery on restart. Callback tokens are not stored in this replay history.
+   An ordinary restart discards an abandoned recovery session and clears the saved recovery flag before opening Login. Ordinary authenticated sessions still open Home. An expired/invalid link closes its temporary session and returns to Login with an explanatory message; it does not leave the app on an unusable reset form. Earlier builds' stale flags are cleaned up automatically when the updated app starts.
 
 4. **Set new password**  
    User enters new password and confirm → “Update Password”.  
    App calls `updateUser({ password })`, then signs the user out and navigates to login with a success message.
+
+5. **Cancel / Back**
+   Both the toolbar arrow and system Back wait for any in-flight exchange, sign out the temporary recovery session, then clear the marker and replace the reset route with Login. Popping the previous navigation stack is intentionally avoided. Failed cleanup keeps the recovery guard active so it cannot expose the dashboard.
 
 ---
 
@@ -120,6 +124,8 @@ No extra backend setup is required; the app uses Supabase’s built-in uniquenes
 - **Android:** `android/app/src/main/AndroidManifest.xml` – intent-filter with `oycconnect` scheme and `reset-password` host.
 - **iOS:** `ios/Runner/Info.plist` – `CFBundleURLTypes` with scheme `oycconnect`.
 
+Flutter's built-in deep-link routing is explicitly disabled on Android/iOS because `app_links` owns these callbacks. Supabase initialization also sets `FlutterAuthClientOptions(detectSessionInUri: false)` so two handlers cannot race to consume a one-time code. Preserve these settings together.
+
 Already configured in this project.
 
 ---
@@ -130,5 +136,9 @@ Already configured in this project.
 2. Enter a **real email** that exists in your Supabase Auth users.
 3. Check the inbox; use the link in the email (on a device/emulator where the app is installed).
 4. App should open and show **Set New Password**; set a new password and confirm you can log in with it.
+
+Repeat on Android and iPhone with the app terminated, backgrounded and open. On the reset page, test toolbar Back and system Back: both must return to Login, and reopening the app must not open the dashboard. Repeat Back while the link is still loading. Check an expired link, a repeated link and a successful update. Use a fresh email link for each completed/expired recovery attempt.
+
+Automated regressions: `flutter test test/password_recovery_test.dart`. Tests cover launch timing, duplicate delivery, callbacks without a recovery event, restart isolation, cancellation during exchange, cleanup failure, expired links, normal login routing, both Back controls and form submission. Physical-device email-link behavior still requires an updated installed build.
 
 If the link opens in a browser and you see a blank page, set up the web fallback (section 2) and use it as the redirect URL.

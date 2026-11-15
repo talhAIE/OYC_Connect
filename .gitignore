@@ -1,0 +1,18 @@
+# Local client configuration and server secrets must never enter Git.
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+oyc_connect/assets/env
+
+# Private security tooling, reports and sanitized-history staging.
+.security/
+**/.secrets/
+
+# Local Supabase project metadata and certificate files.
+**/supabase/.temp/
+*.pem
+*.crt
+*.cer
+*.p12
+*.pfx

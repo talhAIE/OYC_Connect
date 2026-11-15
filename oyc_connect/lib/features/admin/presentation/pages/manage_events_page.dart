@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/supabase_constants.dart';
-import '../../../../core/theme/app_pallete.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../features/community/data/models/event_model.dart';
 import '../../../../features/community/presentation/providers/community_providers.dart';

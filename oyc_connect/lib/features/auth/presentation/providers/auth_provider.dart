@@ -1,9 +1,22 @@
+import 'dart:async';
+import 'package:app_links/app_links.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/auth_repository.dart';
+import '../../data/password_recovery_controller.dart';
 
-/// Set to true when user opens app via password-reset deep link so redirect sends them to set-new-password.
-final recoveryPendingProvider = StateProvider<bool>((ref) => false);
+final passwordRecoveryProvider =
+    ChangeNotifierProvider<PasswordRecoveryController>((ref) {
+      final appLinks = AppLinks();
+      final controller = PasswordRecoveryController(
+        repository: ref.watch(authRepositoryProvider),
+        store: PreferencesRecoverySessionStore(),
+        initialLink: appLinks.getInitialLink,
+        links: appLinks.uriLinkStream,
+      );
+      unawaited(controller.initialize());
+      return controller;
+    });
 
 // Dependency Injection for Supabase Client
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
@@ -55,7 +68,7 @@ class AuthController extends Notifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       await _authRepository.signIn(email: email, password: password);
-      // OneSignal login is handled in auth_repository
+      // Notification identity is reconciled centrally from auth state.
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -63,7 +76,7 @@ class AuthController extends Notifier<AsyncValue<void>> {
   }
 
   Future<void> signOut() async {
-    // OneSignal logout is handled in auth_repository
+    // Notification identity and opt-out follow the auth-state change.
     await _authRepository.signOut();
   }
 
@@ -80,8 +93,10 @@ class AuthController extends Notifier<AsyncValue<void>> {
   Future<void> setNewPassword(String newPassword) async {
     state = const AsyncValue.loading();
     try {
-      await _authRepository.updatePassword(newPassword);
-      await signOut();
+      final completed = await ref
+          .read(passwordRecoveryProvider)
+          .complete(newPassword);
+      if (!completed) throw StateError('Could not finish password recovery.');
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);

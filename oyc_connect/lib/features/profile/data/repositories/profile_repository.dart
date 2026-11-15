@@ -1,7 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/profile_model.dart';
-import '../../../../core/constants/supabase_constants.dart';
 
 part 'profile_repository.g.dart';
 
@@ -43,7 +42,13 @@ class ProfileRepository {
 
     if (updates.isEmpty) return;
 
-    await _supabase.from('profiles').update(updates).eq('id', userId);
+    // An RLS-filtered no-op must not be reported as a successfully saved switch.
+    await _supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', userId)
+        .select('id')
+        .single();
   }
 
   Future<void> changePassword({

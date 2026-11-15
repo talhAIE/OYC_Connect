@@ -1,5 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import '../../../core/constants/supabase_constants.dart';
 
 class AuthRepository {
@@ -21,11 +20,6 @@ class AuthRepository {
         data: {'full_name': fullName, 'phone': phone},
       );
 
-      // Enable notifications after successful signup
-      if (response.user != null) {
-        OneSignal.login(response.user!.id);
-      }
-
       return response;
     } on AuthException catch (e) {
       throw _handleAuthError(e);
@@ -44,11 +38,6 @@ class AuthRepository {
         email: email,
         password: password,
       );
-
-      // Enable notifications after successful login
-      if (response.user != null) {
-        OneSignal.login(response.user!.id);
-      }
 
       return response;
     } on AuthException catch (e) {
@@ -71,14 +60,17 @@ class AuthRepository {
 
       if (response.status != 200) {
         final msg = response.data is Map
-            ? (response.data['error'] as String? ?? 'Could not send reset email.')
+            ? (response.data['error'] as String? ??
+                  'Could not send reset email.')
             : 'Could not send reset email.';
         throw Exception(msg);
       }
     } on FunctionException catch (e) {
       // Edge Function returned 4xx/5xx; show the message from the response body
       final msg = e.details is Map
-          ? (e.details['error'] as String? ?? e.reasonPhrase ?? 'Could not send reset email.')
+          ? (e.details['error'] as String? ??
+                e.reasonPhrase ??
+                'Could not send reset email.')
           : (e.reasonPhrase ?? 'Could not send reset email.');
       throw Exception(msg);
     } on AuthException catch (e) {
@@ -92,6 +84,17 @@ class AuthRepository {
   /// Call after user opens the app via the reset link. Establishes session so updateUser can be used.
   Future<void> recoverSessionFromUrl(Uri uri) async {
     await _supabase.auth.getSessionFromUrl(uri);
+  }
+
+  /// Recovery grants a temporary session, not a normal application login.
+  Future<void> signOutRecoverySession() async {
+    try {
+      await _supabase.auth.signOut(scope: SignOutScope.local);
+    } catch (_) {
+      // GoTrue clears local state before requesting server revocation. An
+      // offline revocation failure must not trap a locally signed-out user.
+      if (_supabase.auth.currentSession != null) rethrow;
+    }
   }
 
   /// Updates the current user's password (e.g. after recovery). Call recoverSessionFromUrl first.
@@ -116,9 +119,6 @@ class AuthRepository {
 
   // Sign Out
   Future<void> signOut() async {
-    // Logout from OneSignal to stop receiving notifications
-    await OneSignal.logout();
-
     // Sign out from Supabase
     await _supabase.auth.signOut();
   }

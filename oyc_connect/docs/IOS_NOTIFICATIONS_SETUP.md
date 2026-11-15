@@ -6,18 +6,18 @@ Complete step-by-step guide to set up push notifications on iOS using OneSignal.
 
 ## What's Already Done ✅
 
-Your Flutter code is **fully ready** — no code changes needed:
+The notification service now reconciles restored sessions and shows device status in Profile. A signed-device test is still required; repository configuration alone does not prove iPhone delivery.
 
 | Component | Status | Where |
 |---|---|---|
-| OneSignal SDK init | ✅ | `main.dart` — `OneSignal.initialize()` + `requestPermission()` |
-| User login/logout | ✅ | `auth_repository.dart` — `OneSignal.login(userId)` / `OneSignal.logout()` |
+| OneSignal SDK init | ✅ | `PushNotificationService` initializes on mobile and requests permission when appropriate |
+| User login/logout | ✅ | Root auth/profile listeners reconcile identity, opt-in, and logout |
 | Opt-in/out toggle | ✅ | `profile_provider.dart` — `pushSubscription.optIn()` / `optOut()` |
 | Background mode | ✅ | `Info.plist` — `remote-notification` in `UIBackgroundModes` |
-| Server-side push | ✅ | `notify-admins` + `notify_broadcast` Edge Functions |
+| Server-side push | ✅ | SQL triggers/cron → private delivery ledger → pg_net → OneSignal; optional Edge senders are not deployed |
 | `.env` config | ✅ | `ONESIGNAL_APP_ID` already configured |
 
-**All you need to do is configure the Apple side + OneSignal Dashboard.**
+Runner now declares development APNs entitlements for Debug and production entitlements for Release/Profile. Apple App ID capability, provisioning, OneSignal APNs credentials and an updated signed installation must still be verified. See `NOTIFICATION_IMPLEMENTATION_PLAN.md`.
 
 ---
 

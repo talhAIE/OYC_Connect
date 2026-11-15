@@ -42,8 +42,8 @@ class _CustomFieldState extends State<CustomField> {
         borderRadius: BorderRadius.circular(borderRadiusValue),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(
-              0.05,
+            color: Colors.black.withValues(
+              alpha: 0.05,
             ), // Subtle, professional shadow
             blurRadius: 20,
             spreadRadius: 1,

@@ -38,7 +38,8 @@ create table public.profiles (
   id uuid references auth.users not null primary key,
   email text,
   full_name text,
-  role text default 'member', -- 'admin' or 'member'
+  role text not null default 'member' check (role in ('member', 'admin')),
+  notifications_enabled boolean not null default true,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -46,17 +47,20 @@ create table public.profiles (
 alter table public.profiles enable row level security;
 
 -- Policies for Profiles
-create policy "Public profiles are viewable by everyone."
-  on profiles for select
-  using ( true );
+create policy "Users can read their own profile."
+  on profiles for select to authenticated
+  using ( auth.uid() = id );
 
-create policy "Users can insert their own profile."
-  on profiles for insert
-  with check ( auth.uid() = id );
+-- Profiles are inserted by the trusted auth signup trigger, never by clients.
+revoke insert, update, delete, truncate, references, trigger
+  on public.profiles from public, anon, authenticated;
+grant select on public.profiles to authenticated;
+grant update (full_name, notifications_enabled) on public.profiles to authenticated;
 
 create policy "Users can update own profile."
-  on profiles for update
-  using ( auth.uid() = id );
+  on profiles for update to authenticated
+  using ( auth.uid() = id )
+  with check ( auth.uid() = id );
 
 -- 2. Create Prayer Times Table
 create table public.prayer_times (
@@ -153,6 +157,7 @@ create trigger on_auth_user_created
 ```
 
 4.  Click **Run** (bottom right) to execute the script.
+5.  Before allowing client access, apply `supabase/migrations/20261024000000_protect_profile_roles.sql` as the database owner. Existing installations must also apply this migration: it removes legacy write grants/policies and adds server-only role guards. See `docs/PROFILE_ROLE_SECURITY.md` for verification and trusted role management.
 
 ## 5. Storage Setup (Optional for now)
 If you plan to upload images for events:

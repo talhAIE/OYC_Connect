@@ -55,7 +55,7 @@ returns void as $$
 declare
   -- Use same app_id as events trigger and Flutter app (4428e176...)
   os_app_id text := '4428e176-2a7f-4d7f-9c28-4ebec13b5001';
-  os_api_key text := 'os_v2_app_iquoc5rkp5gx7hbij27mco2qahav72yvfclu2jexb3dw457asdftzhf4vtf5e45ozbln6ruhu5g3j6wcw6ilapalnnjk4by6x6mn4ca';
+  os_api_key text := (select decrypted_secret from vault.decrypted_secrets where name = 'oyc_onesignal_api_key');
 begin
   perform net.http_post(
       url:='https://onesignal.com/api/v1/notifications',

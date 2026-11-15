@@ -1,4 +1,5 @@
 -- 1. Enable the Network Extension
+-- Legacy setup: configure Vault and apply 20261024010000_restrict_notification_senders.sql afterward.
 create extension if not exists pg_net;
 
 -- 2. Create the Function to Send Notification
@@ -7,7 +8,7 @@ returns trigger as $$
 declare
   -- MUST match Flutter app (main.dart) and send_onesignal_notification_manual – same OneSignal app
   os_app_id text := '4428e176-2a7f-4d7f-9c28-4ebec13b5001';
-  os_api_key text := 'os_v2_app_iquoc5rkp5gx7hbij27mco2qahav72yvfclu2jexb3dw457asdftzhf4vtf5e45ozbln6ruhu5g3j6wcw6ilapalnnjk4by6x6mn4ca';
+  os_api_key text := (select decrypted_secret from vault.decrypted_secrets where name = 'oyc_onesignal_api_key');
   
   -- Variables
   notification_title text;
@@ -50,6 +51,8 @@ drop trigger if exists trigger_notify_event on public.events;
 create trigger trigger_notify_event
 after insert on public.events
 for each row execute function public.send_onesignal_notification();
+
+revoke all on function public.send_onesignal_notification() from public, anon, authenticated, service_role;
 
 -- 4. Create Trigger for ANNOUNCEMENTS Table
 drop trigger if exists trigger_notify_announcement on public.announcements;

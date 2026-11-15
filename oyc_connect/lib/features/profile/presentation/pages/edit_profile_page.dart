@@ -37,12 +37,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         await ref
             .read(profileProvider.notifier)
             .updateName(_nameController.text.trim());
-        if (mounted) context.pop();
+        
+        if (!mounted) return;
+        context.pop();
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated successfully')),
         );
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error updating profile: $e')));

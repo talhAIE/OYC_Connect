@@ -84,12 +84,25 @@ class ProfilePage extends ConsumerWidget {
                   icon: Icons.notifications_none,
                   title: "Notifications",
                   value: profile?.notificationsEnabled ?? true,
-                  onChanged: (val) => ref
-                      .read(profileProvider.notifier)
-                      .toggleNotifications(val),
+                  onChanged: (val) async {
+                    try {
+                      await ref
+                          .read(profileProvider.notifier)
+                          .toggleNotifications(val);
+                    } catch (_) {
+                      if (context.mounted)
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Could not update notifications. Check your phone permissions and try again.',
+                            ),
+                          ),
+                        );
+                    }
+                  },
                 ),
                 loading: () => const SizedBox(),
-                error: (_, __) => const SizedBox(),
+                error: (_, _) => const SizedBox(),
               ),
 
               const SizedBox(height: 12),
@@ -272,7 +285,7 @@ class ProfilePage extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -329,7 +342,7 @@ class ProfilePage extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -368,7 +381,7 @@ class ProfilePage extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -386,7 +399,7 @@ class ProfilePage extends ConsumerWidget {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         value: value,
         onChanged: onChanged,
-        activeColor: const Color(0xFF1B5E20),
+        activeThumbColor: const Color(0xFF1B5E20),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
@@ -447,7 +460,8 @@ class ProfilePage extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         title: const Text("Permanently Delete Account"),
         content: const Text(
-            "Are you absolutely sure you want to permanently delete your account? This action cannot be undone and all your data, profile information, and history will be permanently erased. Administrator privileges will also be revoked."),
+          "Are you absolutely sure you want to permanently delete your account? This action cannot be undone and all your data, profile information, and history will be permanently erased. Administrator privileges will also be revoked.",
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -456,34 +470,48 @@ class ProfilePage extends ConsumerWidget {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx); // close dialog
-              
+
               // Show loading spinner
               showDialog(
                 context: context,
                 barrierDismissible: false,
                 useRootNavigator: true,
-                builder: (_) => const Center(child: CircularProgressIndicator()),
+                builder: (_) =>
+                    const Center(child: CircularProgressIndicator()),
               );
-              
+
               try {
                 // Call secure database function to delete from Supabase Auth
                 await Supabase.instance.client.rpc('delete_user');
-                
+
                 if (context.mounted) {
-                  Navigator.of(context, rootNavigator: true).pop(); // close loading
+                  Navigator.of(
+                    context,
+                    rootNavigator: true,
+                  ).pop(); // close loading
                   ref.read(authControllerProvider.notifier).signOut();
                 }
               } catch (e) {
                 debugPrint('DELETE ACCOUNT ERROR: $e');
                 if (context.mounted) {
-                  Navigator.of(context, rootNavigator: true).pop(); // close loading
+                  Navigator.of(
+                    context,
+                    rootNavigator: true,
+                  ).pop(); // close loading
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Failed to delete account. Please try again.")),
+                    const SnackBar(
+                      content: Text(
+                        "Failed to delete account. Please try again.",
+                      ),
+                    ),
                   );
                 }
               }
             },
-            child: const Text("Delete Forever", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: const Text(
+              "Delete Forever",
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

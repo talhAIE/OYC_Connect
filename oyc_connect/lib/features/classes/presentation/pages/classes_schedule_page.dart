@@ -95,7 +95,7 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: _ClassesTheme.primaryTeal.withOpacity(0.12),
+            color: _ClassesTheme.primaryTeal.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(16),
           ),
           child: const Icon(
@@ -124,10 +124,10 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: _ClassesTheme.primaryTeal.withOpacity(0.08),
+        color: _ClassesTheme.primaryTeal.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _ClassesTheme.primaryTeal.withOpacity(0.2),
+          color: _ClassesTheme.primaryTeal.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -144,7 +144,7 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
               'All classes held between Maghrib & Isha, unless stated otherwise.',
               style: TextStyle(
                 fontSize: 14,
-                color: _ClassesTheme.primaryNavy.withOpacity(0.85),
+                color: _ClassesTheme.primaryNavy.withValues(alpha: 0.85),
                 fontWeight: FontWeight.w500,
                 height: 1.4,
               ),
@@ -265,7 +265,7 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
     final isQuran = type == 'quran';
     final accentColor =
         isQuran ? _ClassesTheme.quranAccent : _ClassesTheme.primaryTeal;
-    final iconBg = accentColor.withOpacity(0.12);
+    final iconBg = accentColor.withValues(alpha: 0.12);
     final icon = isQuran
         ? Icons.auto_stories_rounded
         : Icons.event_note_rounded;
@@ -281,7 +281,7 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
         border: Border.all(color: _ClassesTheme.cardBorder, width: 1),
         boxShadow: [
           BoxShadow(
-            color: _ClassesTheme.primaryNavy.withOpacity(0.06),
+            color: _ClassesTheme.primaryNavy.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -328,7 +328,7 @@ class _ClassesSchedulePageState extends ConsumerState<ClassesSchedulePage>
                     group.teacherName!,
                     style: TextStyle(
                       fontSize: 13,
-                      color: _ClassesTheme.primaryNavy.withOpacity(0.65),
+                      color: _ClassesTheme.primaryNavy.withValues(alpha: 0.65),
                       fontWeight: FontWeight.w500,
                     ),
                   ),

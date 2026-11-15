@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/donation_constants.dart';
+import 'android_donation_page.dart';
 
-/// Opens the official donation page in the external browser only.
+/// Android uses native checkout; iOS and other platforms use the website.
 class DonationPage extends ConsumerStatefulWidget {
   const DonationPage({super.key});
 
@@ -47,6 +49,9 @@ class _DonationPageState extends ConsumerState<DonationPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return const AndroidDonationPage();
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: SafeArea(

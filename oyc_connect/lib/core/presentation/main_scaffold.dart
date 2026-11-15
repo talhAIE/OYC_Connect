@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 class MainScaffold extends StatelessWidget {
@@ -33,7 +34,7 @@ class MainScaffold extends StatelessWidget {
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -56,24 +57,31 @@ class MainScaffold extends StatelessWidget {
               unselectedFontSize: 12, // Compact font
               iconSize: 26,
               onTap: _goBranch,
-              items: const [
-                BottomNavigationBarItem(
+              items: [
+                const BottomNavigationBarItem(
                   icon: Icon(Icons.home_filled),
                   label: "HOME",
                 ),
-                BottomNavigationBarItem(
+                const BottomNavigationBarItem(
                   icon: Icon(Icons.people_outline),
                   label: "COMMUNITY",
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.open_in_browser_rounded),
-                  label: "WEBSITE",
+                  icon: Icon(
+                    !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+                        ? Icons.volunteer_activism_rounded
+                        : Icons.open_in_browser_rounded,
+                  ),
+                  label:
+                      !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+                      ? 'DONATE'
+                      : 'WEBSITE',
                 ),
-                BottomNavigationBarItem(
+                const BottomNavigationBarItem(
                   icon: Icon(Icons.school_outlined),
                   label: "CLASSES",
                 ),
-                BottomNavigationBarItem(
+                const BottomNavigationBarItem(
                   icon: Icon(Icons.person_outline),
                   label: "PROFILE",
                 ),

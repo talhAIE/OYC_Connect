@@ -1,8 +1,6 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/profile/presentation/providers/profile_provider.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
@@ -17,6 +15,7 @@ import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/profile/presentation/pages/change_password_page.dart';
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
+import '../../features/admin/presentation/pages/notification_delivery_page.dart';
 import '../../features/admin/presentation/pages/manage_prayer_times_page.dart';
 import '../../features/admin/presentation/pages/manage_events_page.dart';
 import '../../features/admin/presentation/pages/manage_announcements_page.dart';
@@ -25,51 +24,31 @@ import '../../features/admin/presentation/pages/donation_history_page.dart';
 import '../../features/admin/presentation/pages/manage_khateebs_page.dart';
 
 import '../../features/prayer_times/presentation/pages/prayer_calendar_page.dart';
+import '../../features/prayer_times/presentation/pages/qibla_page.dart';
 import '../../features/classes/presentation/pages/classes_schedule_page.dart';
 import '../../features/classes/presentation/pages/manage_schedule_page.dart';
 import '../../features/classes/presentation/pages/manage_classes_page.dart';
 import '../../features/classes/presentation/pages/manage_teachers_page.dart';
 import '../presentation/main_scaffold.dart';
-
-// We need a provider for the router to listen to auth changes
-// For simplicity in this step, we'll define the router here.
-// Ideally, this should be in lib/core/router/router.dart
+import '../notifications/notification_navigation.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
-  final authRepository = ref.watch(authRepositoryProvider);
+  // Read rather than watch: refresh this router instead of recreating its
+  // navigation stack on every recovery/auth event.
+  final recovery = ref.read(passwordRecoveryProvider);
+  final authRepository = ref.read(authRepositoryProvider);
+  final notificationNavigation = ref.read(notificationNavigationProvider);
 
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/',
-    refreshListenable: GoRouterRefreshStream(authRepository.authStateChanges),
+    refreshListenable: Listenable.merge([recovery, notificationNavigation]),
     redirect: (context, state) {
-      final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
-      final path = state.uri.path;
-      final isAuthRoute =
-          path == '/login' ||
-          path == '/register' ||
-          path == '/forgot-password' ||
-          path == '/set-new-password';
-
-      // If we just recovered session from password-reset link, send to set-new-password
-      try {
-        final container = ProviderScope.containerOf(context);
-        if (container.read(recoveryPendingProvider)) {
-          return '/set-new-password';
-        }
-      } catch (_) {}
-
-      // If not logged in and not on an auth route, redirect to login
-      if (!isLoggedIn && !isAuthRoute) {
-        return '/login';
+      final loggedIn = authRepository.currentUser != null;
+      if (!recovery.initializing && !recovery.active && loggedIn) {
+        final pending = notificationNavigation.takePendingLocation();
+        if (pending != null && pending != state.uri.toString()) return pending;
       }
-
-      // If logged in and on login/register/root (but not recovery), redirect to home
-      if (isLoggedIn &&
-          (path == '/login' || path == '/register' || path == '/')) {
-        return '/home';
-      }
-
-      return null;
+      return recovery.redirect(state.uri.path, isLoggedIn: loggedIn);
     },
     routes: [
       // Root route for initial logic or splash
@@ -102,6 +81,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'prayer-calendar',
                     builder: (context, state) => const PrayerCalendarPage(),
                   ),
+                  GoRoute(
+                    path: 'qibla',
+                    builder: (context, state) => const QiblaPage(),
+                  ),
                 ],
               ),
             ],
@@ -110,7 +93,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/community',
-                builder: (context, state) => const CommunityPage(),
+                builder: (context, state) {
+                  final extra = state.extra as Map<String, dynamic>?;
+                  final initialTab =
+                      state.uri.queryParameters['tab'] == 'notices'
+                      ? 1
+                      : extra?['tab'] as int? ?? 0;
+                  return CommunityPage(
+                    key: ValueKey(state.uri.toString()),
+                    initialTab: initialTab,
+                  );
+                },
               ),
             ],
           ),
@@ -164,6 +157,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     },
                     routes: [
                       GoRoute(
+                        path: 'notifications',
+                        builder: (context, state) =>
+                            const NotificationDeliveryPage(),
+                      ),
+                      GoRoute(
                         path: 'prayer-times',
                         builder: (context, state) =>
                             const ManagePrayerTimesPage(),
@@ -212,21 +210,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+  ref.onDispose(router.dispose);
+  return router;
 });
-
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
-    notifyListeners();
-    _subscription = stream.asBroadcastStream().listen(
-      (dynamic _) => notifyListeners(),
-    );
-  }
-
-  late final StreamSubscription<dynamic> _subscription;
-
-  @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
-  }
-}

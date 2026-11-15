@@ -10,7 +10,7 @@
    - Type: HTTP Request
    - Method: POST
    - URL: https://<project-ref>.supabase.co/functions/v1/notify_broadcast
-   - Headers: Authorization: Bearer <anon-key>
+   - Headers: Authorization: Bearer <server-service-role-key> (trusted server only)
 
 2. Create Webhook for EVENTS
    - Name: notify-events
@@ -19,7 +19,7 @@
    - Type: HTTP Request
    - Method: POST
    - URL: https://<project-ref>.supabase.co/functions/v1/notify_broadcast
-   - Headers: Authorization: Bearer <anon-key>
+   - Headers: Authorization: Bearer <server-service-role-key> (trusted server only)
 */
 
 -- OPTIONAL: IF YOU WANT TO SCHEDULE PRAYER TIMES
@@ -33,7 +33,7 @@ select cron.schedule(
     select
       net.http_post(
           url:='https://<project-ref>.supabase.co/functions/v1/notify_broadcast',
-          headers:='{"Content-Type": "application/json", "Authorization": "Bearer <anon-key>"}',
+          headers:='{"Content-Type": "application/json", "Authorization": "Bearer <server-service-role-key>"}',
           body:='{"record": {"title": "Prayer Alert", "body": "It is prayer time"}}'
       ) as request_id;
   $$

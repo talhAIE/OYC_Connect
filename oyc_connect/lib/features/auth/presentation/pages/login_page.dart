@@ -58,6 +58,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
 
     final isLoading = ref.watch(authControllerProvider).isLoading;
+    final recoveryMessage = ref.watch(passwordRecoveryProvider).error;
 
     return Scaffold(
       body: SafeArea(
@@ -94,6 +95,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 48),
+                  if (recoveryMessage != null) ...[
+                    Text(
+                      recoveryMessage,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Email Field
                   CustomField(

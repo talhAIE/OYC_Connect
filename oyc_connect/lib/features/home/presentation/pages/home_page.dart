@@ -44,41 +44,54 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA), // Light background
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _refreshAll,
-          color: const Color(0xFF1B5E20),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 24),
-                prayerTimeAsync.when(
-                  data: (prayerTime) {
-                    if (prayerTime == null) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(20.0),
-                          child: Text("No prayer times found for today."),
-                        ),
-                      );
-                    }
-                    return _PrayerContent(
-                      prayerTime: prayerTime,
-                      jummahConfig: jummahConfigAsync.asData?.value,
-                    );
-                  },
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) => Center(child: Text('Error: $err')),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: RefreshIndicator(
+              onRefresh: _refreshAll,
+              color: const Color(0xFF1B5E20),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 24),
+                    prayerTimeAsync.when(
+                      data: (prayerTime) {
+                        if (prayerTime == null) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(20.0),
+                              child: Text("No prayer times found for today."),
+                            ),
+                          );
+                        }
+                        return _PrayerContent(
+                          prayerTime: prayerTime,
+                          jummahConfig: jummahConfigAsync.asData?.value,
+                        );
+                      },
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (err, stack) => Center(child: Text('Error: $err')),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+          // Floating Qibla Button — just the emoji, no background circle
+          Positioned(
+            right: 24,
+            bottom: 80,
+            child: GestureDetector(
+              onTap: () => context.go('/home/qibla'),
+              child: const Text('🕋', style: TextStyle(fontSize: 36)),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -88,18 +101,18 @@ class _HomePageState extends ConsumerState<HomePage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: const [
+        children: [
           // 🕌 Masjid Icon
-          Icon(
+          const Icon(
             Icons.mosque,
             size: 40,
             color: Color.fromARGB(255, 163, 129, 3), // Muted Gold
           ),
 
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
 
           // 🏷️ Musalla Name
-          Flexible(
+          const Flexible(
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
@@ -422,7 +435,7 @@ class _NextPrayerCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color.fromARGB(255, 22, 65, 16).withOpacity(0.7),
+            color: const Color.fromARGB(255, 22, 65, 16).withValues(alpha: 0.7),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -445,7 +458,7 @@ class _NextPrayerCard extends StatelessWidget {
             child: Icon(
               Icons.mosque,
               size: 140,
-              color: Colors.white.withOpacity(0.06),
+              color: Colors.white.withValues(alpha: 0.06),
             ),
           ),
           Padding(
@@ -529,7 +542,7 @@ class _NextPrayerCard extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.22),
+                        color: Colors.black.withValues(alpha: 0.22),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -543,7 +556,7 @@ class _NextPrayerCard extends StatelessWidget {
                           Text(
                             "In $countdown",
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.95),
+                              color: Colors.white.withValues(alpha: 0.95),
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
@@ -559,7 +572,7 @@ class _NextPrayerCard extends StatelessWidget {
                         22,
                         22,
                         18,
-                      ).withOpacity(0.22), // 👈 background color
+                      ).withValues(alpha: 0.22), // 👈 background color
                       borderRadius: BorderRadius.circular(8),
                       child: InkWell(
                         onTap: () => context.go('/home/prayer-calendar'),
@@ -741,13 +754,13 @@ class _PrayerList extends StatelessWidget {
         border: isActive
             ? Border.all(color: Colors.green.shade200, width: 1.5)
             : Border.all(
-                color: const Color.fromARGB(255, 41, 41, 41).withOpacity(0.2),
+                color: const Color.fromARGB(255, 41, 41, 41).withValues(alpha: 0.2),
                 width: 1,
               ),
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: const Color.fromARGB(255, 14, 61, 16).withOpacity(0.2),
+                  color: const Color.fromARGB(255, 14, 61, 16).withValues(alpha: 0.2),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
                 ),
@@ -846,10 +859,10 @@ class _PrayerList extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white, // Light theme
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.teal.withOpacity(0.3), width: 1),
+          border: Border.all(color: Colors.teal.withValues(alpha: 0.3), width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.teal.withOpacity(0.1),
+              color: Colors.teal.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -860,7 +873,7 @@ class _PrayerList extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.teal.withOpacity(0.1),
+                color: Colors.teal.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.mosque, color: Colors.teal),
@@ -905,7 +918,7 @@ class _PrayerList extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.teal.withOpacity(0.7),
+                    color: Colors.teal.withValues(alpha: 0.7),
                   ),
                 ),
               ],

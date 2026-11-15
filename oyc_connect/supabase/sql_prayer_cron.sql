@@ -73,7 +73,7 @@ create or replace function public.send_onesignal_notification_manual(title text,
 returns void as $$
 declare
   os_app_id text := '1841c7be-1c1b-4ef4-96ec-17b15b252126';
-  os_api_key text := 'os_v2_app_dba4ppq4dnhpjfxmc6yvwjjbezkxhogy6ivuud5q5bxhbkzopnojspymhbylfsom5vrpyciq3ogpi7seotmbx3k5uh6ki3hyzqr545i';
+  os_api_key text := (select decrypted_secret from vault.decrypted_secrets where name = 'oyc_onesignal_api_key');
 begin
   perform net.http_post(
       url:='https://onesignal.com/api/v1/notifications',

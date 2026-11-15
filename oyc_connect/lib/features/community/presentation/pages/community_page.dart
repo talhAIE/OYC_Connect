@@ -7,21 +7,35 @@ import '../../data/models/event_model.dart';
 import '../../data/models/announcement_model.dart';
 
 class CommunityPage extends ConsumerStatefulWidget {
-  const CommunityPage({super.key});
+  final int initialTab;
+
+  const CommunityPage({super.key, this.initialTab = 0});
 
   @override
   ConsumerState<CommunityPage> createState() => _CommunityPageState();
 }
 
 class _CommunityPageState extends ConsumerState<CommunityPage> {
-  int _selectedIndex = 0; // 0 for Events, 1 for Notices
+  late int _selectedIndex; // 0 for Events, 1 for Notices
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialTab;
+  }
+
+  @override
+  void didUpdateWidget(CommunityPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialTab != oldWidget.initialTab) {
+      _selectedIndex = widget.initialTab;
+    }
+  }
 
   // Professional Mosque Theme Colors
   static const Color primaryNavy = Color(0xFF0F172A);
   static const Color primaryGreen = Color(0xFF006D5B);
   static const Color featuredGreen = Color(0xFF00B167);
-  static const Color labelGrey = Color(0xFF94A3B8);
-  static const Color borderSlate = Color(0xFFE2E8F0);
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +104,7 @@ class _CommunityPageState extends ConsumerState<CommunityPage> {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withValues(alpha: 0.15),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -213,7 +227,7 @@ class _EventCard extends StatelessWidget {
                                 ? event.imageUrl!
                                 : SupabaseConstants.defaultEventImageUrl,
                             fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => _eventImagePlaceholder(200),
+                            errorBuilder: (_, _, _) => _eventImagePlaceholder(200),
                           ),
                         ),
                       ),
@@ -370,7 +384,7 @@ class _EventCard extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 15),
             ),
@@ -393,7 +407,7 @@ class _EventCard extends StatelessWidget {
                     height: 170,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _eventImagePlaceholder(170),
+                    errorBuilder: (_, _, _) => _eventImagePlaceholder(170),
                   ),
                 ),
                 if (event.isFeatured)
@@ -586,7 +600,7 @@ class _NoticeCard extends StatelessWidget {
                           child: Image.network(
                             imageUrl,
                             fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) =>
+                            errorBuilder: (_, _, _) =>
                                 _eventImagePlaceholder(200),
                           ),
                         ),
@@ -705,7 +719,7 @@ class _NoticeCard extends StatelessWidget {
         // If urgent, show a thin colored border
         border: notice.isUrgent
             ? Border.all(
-                color: const Color.fromARGB(45, 18, 165, 18).withOpacity(0.8),
+                color: const Color.fromARGB(45, 18, 165, 18).withValues(alpha: 0.8),
                 width: 1.5,
               )
             : Border.all(
@@ -714,7 +728,7 @@ class _NoticeCard extends StatelessWidget {
               ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -821,7 +835,7 @@ class _NoticeCard extends StatelessWidget {
           height: 56,
           width: 56,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _noticeIconContainer(notice),
+          errorBuilder: (_, _, _) => _noticeIconContainer(notice),
         ),
       );
     }

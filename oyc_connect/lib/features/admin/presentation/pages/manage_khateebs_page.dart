@@ -126,7 +126,7 @@ class _ManageKhateebsPageState extends ConsumerState<ManageKhateebsPage> {
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: khateebs.length,
-            separatorBuilder: (_, __) => const Divider(),
+            separatorBuilder: (_, _) => const Divider(),
             itemBuilder: (context, index) {
               final khateeb = khateebs[index];
               return Card(

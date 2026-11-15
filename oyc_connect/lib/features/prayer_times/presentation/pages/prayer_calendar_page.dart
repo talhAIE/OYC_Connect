@@ -105,13 +105,13 @@ class _PrayerDayCard extends StatelessWidget {
         border: isToday
             ? Border.all(color: const Color(0xFF1B5E20), width: 2)
             : Border.all(
-                color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.4),
+                color: const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.4),
               ),
         boxShadow: [
           BoxShadow(
             color: isToday
-                ? const Color(0xFF1B5E20).withOpacity(0.4)
-                : Colors.black.withOpacity(0.05),
+                ? const Color(0xFF1B5E20).withValues(alpha: 0.4)
+                : Colors.black.withValues(alpha: 0.05),
             blurRadius: 5,
             offset: const Offset(0, 5),
           ),
@@ -153,7 +153,7 @@ class _PrayerDayCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Row(

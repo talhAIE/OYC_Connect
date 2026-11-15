@@ -3,7 +3,7 @@ import '../../data/models/profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
+import '../../../../core/notifications/push_notification_service.dart';
 
 part 'profile_provider.g.dart';
 
@@ -51,21 +51,29 @@ class Profile extends _$Profile {
     }
 
     try {
-      // Sync with OneSignal
-      // If enabled = true, we want to OPT IN
-      // If enabled = false, we want to OPT OUT
-      if (enabled) {
-        OneSignal.User.pushSubscription.optIn();
-      } else {
-        OneSignal.User.pushSubscription.optOut();
-      }
+      final userId = ref.read(supabaseClientProvider).auth.currentUser?.id;
+      if (userId == null) throw StateError('Please sign in first.');
+      await ref
+          .read(pushNotificationServiceProvider)
+          .synchronize(userId, enabled: enabled, prompt: enabled);
 
       await ref
           .read(profileRepositoryProvider)
           .updateProfile(notificationsEnabled: enabled);
     } catch (e) {
       state = previousState; // Revert on failure
-      throw e;
+      final userId = ref.read(supabaseClientProvider).auth.currentUser?.id;
+      try {
+        await ref
+            .read(pushNotificationServiceProvider)
+            .synchronize(
+              userId,
+              enabled: previousState.valueOrNull?.notificationsEnabled ?? false,
+            );
+      } catch (_) {
+        /* Device status still displays the synchronization error. */
+      }
+      rethrow;
     }
   }
 }

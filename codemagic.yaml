@@ -39,10 +39,18 @@ workflows:
           set -e
           mkdir -p assets
           : "${ONESIGNAL_APP_ID:?Set ONESIGNAL_APP_ID in group oyc_ios_secrets}"
+          : "${SUPABASE_URL:?Set public SUPABASE_URL in group oyc_ios_secrets}"
+          : "${SUPABASE_ANON_KEY:?Set public SUPABASE_ANON_KEY in group oyc_ios_secrets}"
           cat > assets/.env << EOF
+          SUPABASE_URL=$SUPABASE_URL
+          SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
           ONESIGNAL_APP_ID=$ONESIGNAL_APP_ID
+          STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
           SENTRY_DSN=${SENTRY_DSN:-}
           EOF
+
+      - name: Reject private credentials in client assets and source
+        script: python3 tools/security/scan_secrets.py
 
       - name: Set up code signing on Xcode project
         script: xcode-project use-profiles

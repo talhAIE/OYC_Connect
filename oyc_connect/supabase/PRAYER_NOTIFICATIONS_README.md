@@ -1,5 +1,7 @@
 # Prayer & Jummah Notifications – Fix
 
+> Historical notes below. The authoritative implementation is now the ordered 20261024 profile/security/delivery migrations. Do not reinstall the old repair script over the secured pipeline. See `../docs/NOTIFICATION_IMPLEMENTATION_PLAN.md` for current diagnosis and verification requirements.
+
 ## What was wrong
 
 1. **Wrong OneSignal app**  

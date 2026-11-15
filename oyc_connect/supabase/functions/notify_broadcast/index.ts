@@ -1,9 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serverOnly } from '../_shared/server-auth.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const ONE_SIGNAL_APP_ID = Deno.env.get("ONESIGNAL_APP_ID") ?? "";
-const ONE_SIGNAL_API_KEY = Deno.env.get("ONESIGNAL_API_KEY") ?? "";
-
-serve(async (req) => {
+serve((req) => serverOnly(req, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'), async () => {
   try {
     const { record } = await req.json(); // Payload from Database Webhook
 
@@ -22,23 +21,17 @@ serve(async (req) => {
       body = record.description || "Join us for this event!";
     }
 
-    const response = await fetch("https://onesignal.com/api/v1/notifications", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Basic ${ONE_SIGNAL_API_KEY}`,
-      },
-      body: JSON.stringify({
-        app_id: ONE_SIGNAL_APP_ID,
-        headings: { en: title },
-        contents: { en: body },
-        included_segments: ["All"], // Sends to every user
-      }),
+    // Use the same protected preference-aware pipeline as scheduled prayers.
+    const client = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+    const { error } = await client.rpc('send_onesignal_notification_manual', {
+      title, body,
     });
-
-    const result = await response.json();
-    return new Response(JSON.stringify(result), { headers: { "Content-Type": "application/json" } });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { "Content-Type": "application/json" } });
+    if (error) return new Response('Could not queue notification', { status: 502 });
+    return new Response(JSON.stringify({ queued: true }), { headers: { "Content-Type": "application/json" } });
+  } catch (_) {
+    return new Response(JSON.stringify({ error: 'Could not send notification.' }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
-});
+}));

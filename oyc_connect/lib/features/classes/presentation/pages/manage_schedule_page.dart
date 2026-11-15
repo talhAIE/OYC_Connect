@@ -229,10 +229,10 @@ class _ManageSchedulePageState extends ConsumerState<ManageSchedulePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -261,7 +261,7 @@ class _ManageSchedulePageState extends ConsumerState<ManageSchedulePage> {
                 ),
                 Text(
                   dayName.substring(3).toLowerCase(),
-                  style: TextStyle(fontSize: 9, color: color.withOpacity(0.7)),
+                  style: TextStyle(fontSize: 9, color: color.withValues(alpha: 0.7)),
                 ),
               ],
             ),
@@ -641,7 +641,7 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
             const Text('Class:', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             DropdownButtonFormField<int>(
-              value: _selectedClass,
+              initialValue: _selectedClass,
               decoration: const InputDecoration(border: OutlineInputBorder()),
               items: widget.classes
                   .map<DropdownMenuItem<int>>(
@@ -657,7 +657,7 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<int>(
-              value: _selectedTeacher,
+              initialValue: _selectedTeacher,
               decoration: const InputDecoration(border: OutlineInputBorder()),
               items: widget.teachers
                   .map<DropdownMenuItem<int>>(

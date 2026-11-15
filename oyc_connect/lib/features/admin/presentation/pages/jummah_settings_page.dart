@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../prayer_times/data/models/jummah_config.dart';
-import '../../../prayer_times/data/models/khateeb_model.dart';
 import '../../../prayer_times/presentation/providers/prayer_times_provider.dart';
 import '../../../prayer_times/data/repositories/khateeb_repository.dart';
 
@@ -109,7 +108,7 @@ class _JummahSettingsPageState extends ConsumerState<JummahSettingsPage> {
                             children: [
                               Expanded(
                                 child: DropdownButtonFormField<String>(
-                                  value:
+                                  initialValue:
                                       khateebs.any(
                                         (k) => k.name == _selectedKhateebName,
                                       )
@@ -148,7 +147,7 @@ class _JummahSettingsPageState extends ConsumerState<JummahSettingsPage> {
                                     color: Colors.teal.shade50,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: Colors.teal.withOpacity(0.5),
+                                      color: Colors.teal.withValues(alpha: 0.5),
                                     ),
                                   ),
                                   child: const Icon(

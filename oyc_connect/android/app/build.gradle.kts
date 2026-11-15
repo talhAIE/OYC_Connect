@@ -67,8 +67,9 @@ android {
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             } else {
-                signingConfig = signingConfigs.getByName("debug")
-                println("WARNING: key.properties not found. Using debug signing. This is NOT suitable for Play Store releases.")
+                if (gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }) {
+                    throw GradleException("Release builds require android/key.properties and the production upload keystore. Debug signing must not be used for Play releases.")
+                }
             }
         }
     }

@@ -405,7 +405,7 @@ class _AnnouncementFormDialogState extends State<AnnouncementFormDialog> {
             SwitchListTile(
               title: const Text("Mark as Urgent"),
               value: _isUrgent,
-              activeColor: Colors.red,
+              activeThumbColor: Colors.red,
               onChanged: _isLoading
                   ? null
                   : (val) => setState(() => _isUrgent = val),

@@ -1,9 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serverOnly } from '../_shared/server-auth.ts';
 
 const ONESIGNAL_APP_ID = Deno.env.get("ONESIGNAL_APP_ID") ?? "";
 const ONESIGNAL_API_KEY = Deno.env.get("ONESIGNAL_API_KEY") ?? "";
 
-Deno.serve(async (req) => {
+Deno.serve((req) => serverOnly(req, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'), async () => {
   try {
     const payload = await req.json();
     const record = payload.record; // The new payment record
@@ -32,7 +33,8 @@ Deno.serve(async (req) => {
     const { data: admins, error: adminError } = await supabaseClient
       .from('profiles')
       .select('id')
-      .eq('role', 'admin');
+      .eq('role', 'admin')
+      .eq('notifications_enabled', true);
 
     if (adminError || !admins || admins.length === 0) {
       console.log("No admins found to notify.");
@@ -63,18 +65,17 @@ Deno.serve(async (req) => {
       body: JSON.stringify(notificationBody),
     });
 
+    if (!response.ok) return new Response('Push provider rejected the request', { status: 502 });
     const result = await response.json();
-    console.log("OneSignal Result:", result);
 
     return new Response(JSON.stringify(result), {
       headers: { "Content-Type": "application/json" },
     });
 
-  } catch (err) {
-    console.error(err);
-    return new Response(JSON.stringify({ error: err.message }), {
+  } catch (_) {
+    return new Response(JSON.stringify({ error: 'Could not send notification.' }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
-});
+}));

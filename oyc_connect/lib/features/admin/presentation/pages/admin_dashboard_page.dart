@@ -27,6 +27,15 @@ class AdminDashboardPage extends ConsumerWidget {
           children: [
             _buildAdminTile(
               context,
+              title: 'Notification delivery',
+              subtitle: 'Inspect queued, accepted and failed requests',
+              icon: Icons.notifications_active,
+              color: Colors.teal,
+              onTap: () => context.push('/profile/admin/notifications'),
+            ),
+            const SizedBox(height: 16),
+            _buildAdminTile(
+              context,
               title: "Manage Prayer Times",
               subtitle: "Update Azan and Iqamah times",
               icon: Icons.access_time_filled,
@@ -117,7 +126,7 @@ class AdminDashboardPage extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -128,7 +137,7 @@ class AdminDashboardPage extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 28),

@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -44,7 +46,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>We need access to your camera to allow you to take photos for events and profile.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app requires location access to accurately determine your timezone for prayer times and local event notifications.</string>
+	<string>This app requires location access to accurately determine your timezone for prayer times, calculate the Qibla direction, and show local event notifications.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need access to your photo library to allow you to upload images for events and profile.</string>
 	<key>UIApplicationSceneManifest</key>

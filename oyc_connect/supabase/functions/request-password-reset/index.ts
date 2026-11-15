@@ -58,7 +58,9 @@ Deno.serve(async (req) => {
       ? redirectTo
       : undefined;
 
-    const recoverRes = await fetch(`${supabaseUrl}/auth/v1/recover`, {
+    const redirectQuery = redirect ? `?redirect_to=${encodeURIComponent(redirect)}` : "";
+
+    const recoverRes = await fetch(`${supabaseUrl}/auth/v1/recover${redirectQuery}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -66,7 +68,6 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         email: trimmedEmail,
-        ...(redirect && { redirect_to: redirect }),
       }),
     });
 
